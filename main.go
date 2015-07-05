@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
 	"flag"
 	"fmt"
 	"github.com/vharitonsky/iniflags"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -19,8 +21,8 @@ var (
 )
 
 var (
-	defaultImage = "resources/mm"
-	fallbackUrl = ""
+	defaultImage    = "resources/mm"
+	fallbackUrl     = ""
 	fallbackDefault = ""
 )
 
@@ -70,16 +72,70 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 	writeFile(title, w)
 }
 
-var validPath = regexp.MustCompile("^/(avatar)/([a-zA-Z0-9]+)$")
+type Page struct {
+	Title string
+	Body  []byte
+}
+
+var templates = template.Must(template.ParseFiles("resources/upload.html"))
+
+func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func uploadHandler(w http.ResponseWriter, r *http.Request, title string) {
+	log.Print("* uploadHandler *")
+	renderTemplate(w, "upload", &Page{Title: "Upload your avatar"})
+}
+
+func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+	//	r.ParseForm()
+	log.Print("* saveHandler *")
+	log.Printf("Form: %v", r.Form)
+	email := r.FormValue("email")
+	log.Printf("email: %v", email)
+	file, header, err := r.FormFile("datafile")
+	if err != nil {
+		log.Print("Error: ", err)
+		fmt.Fprintf(w, "<p>Please chooce a file to upload</p>")
+		return
+	}
+	log.Printf("datafile: %v", file)
+	log.Printf("header: %v", header)
+	h := md5.New()
+	io.WriteString(h, email)
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	log.Printf("hash: %s", hash)
+
+	filename := fmt.Sprintf("%s/%s", *dataDir, hash)
+
+	f, err := os.Create(filename)
+	if err != nil {
+		log.Print("Error: ", err)
+		fmt.Fprintf(w, "<p>Error while uploading file</p>")
+		return
+	}
+	defer f.Close()
+	io.Copy(f, file)
+	
+	fmt.Fprintf(w, "<p>Thank you for submitting your avatar</p>")
+}
+
+var validPath = regexp.MustCompile("^/(avatar|upload)/([a-zA-Z0-9]+)(/.*)?$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("Handling request: ", r.URL)
+		log.Printf("Request: %v", r)
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
+			log.Print("Invalid request: ", r.URL)
 			http.NotFound(w, r)
 			return
 		}
+		log.Print("Handling request: ", r.URL)
 		fn(w, r, m[2])
 	}
 }
@@ -98,7 +154,7 @@ func main() {
 		fallbackUrl = *fallback
 		log.Printf("Missig avatars will be redirected to %s", fallbackUrl)
 	}
-	
+
 	if *dflt == "fallback" {
 		log.Printf("Default image will be provided by the fallback service if configured")
 		fallbackDefault = ""
@@ -113,6 +169,8 @@ func main() {
 
 	log.Printf("Listening on %s\n", address)
 	http.HandleFunc("/avatar/", makeHandler(avatarHandler))
+	http.HandleFunc("/upload/form/", makeHandler(uploadHandler))
+	http.HandleFunc("/upload/save/", makeHandler(saveHandler))
 	x := http.ListenAndServe(address, nil)
 	fmt.Println("Result: ", x)
 }
