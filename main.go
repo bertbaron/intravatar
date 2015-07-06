@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/md5"
 	"flag"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"bytes"
 )
 
 var (
@@ -31,8 +31,8 @@ var (
 )
 
 type Avatar struct {
-	size     int
-	data     []byte
+	size int
+	data []byte
 }
 
 type Request struct {
@@ -40,12 +40,35 @@ type Request struct {
 	size int
 }
 
+func readImage(reader io.Reader) *Avatar {
+	b := new(bytes.Buffer)
+	if _, e := io.Copy(b, reader); e != nil {
+		log.Printf("Could not read image", e)
+		return nil
+	}
+	return &Avatar{size: -1, data: b.Bytes()}
+}
+
+func readFromFile(filename string) *Avatar {
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Printf("Error reading file: %v", err)
+		return nil
+	}
+	defer file.Close()
+	return readImage(file)
+}
+
+func retrieveFromLocal(request Request) *Avatar {
+	return readFromFile(createPath(request.hash))
+}
+
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
 func retrieveFromRemote(request Request) *Avatar {
 	if remoteUrl == "" {
 		return nil
 	}
-	options := fmt.Sprintf("s=%d", request.size) 
+	options := fmt.Sprintf("s=%d", request.size)
 	if remoteDefault != "" {
 		options += "&d=" + remoteDefault
 	}
@@ -58,59 +81,43 @@ func retrieveFromRemote(request Request) *Avatar {
 	if resp.StatusCode == 404 {
 		log.Printf("Avatar not found on remote")
 		return nil
-	} else {
-		// TODO check for other status codes?
-		log.Printf("Response: %v", resp)
-		b := new(bytes.Buffer)
-		_, e := io.Copy(b, resp.Body)
-		if e != nil {
-			log.Printf("Could not read image from remote: %s", e)
-		}
-		return &Avatar{size: -1, data: b.Bytes()}
 	}
+	return readImage(resp.Body)
 }
 
 func createPath(hash string) string {
 	return fmt.Sprintf("%s/%s", *dataDir, hash)
 }
 
-func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) error {
+func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
 	b := bytes.NewBuffer(avatar.data)
-	_, e := io.Copy(w, b)
-	// We could write the mimetype in the header, but wget -S suggest that the
-	// mimetype is already automagically detected...
-	return e
+	_, err := io.Copy(w, b)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func loadImage(hash string, w http.ResponseWriter) error {
-	filename := createPath(hash)
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		avatar := retrieveFromRemote(Request{hash: hash, size: -1})
-		if avatar == nil {
-			filename = defaultImage
-		} else {
-			e := writeAvatarResult(w, avatar)
-			if e != nil {
-				return e
-			}
-			return nil
-		}
+func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
+	avatar := retrieveFromLocal(request)
+	if avatar == nil {
+		avatar = retrieveFromRemote(request)
+	}
+	if avatar == nil {
+		avatar = readFromFile(defaultImage)
+	}
+	if avatar == nil {
+		avatar = readFromFile("resources/mm")
 	}
 
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Printf("Error reading file: %v", err)
-		return err
+	if avatar == nil {
+		http.NotFound(w, r)
+	} else {
+		writeAvatarResult(w, avatar)
 	}
-
-	defer file.Close()
-
-	_, e := io.Copy(w, file)
-	return e
 }
 
 func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
-	loadImage(title, w)
+	loadImage(Request{hash: title, size: -1}, w, r)
 }
 
 var templates = template.Must(template.ParseFiles("resources/upload.html", "resources/view.html"))
