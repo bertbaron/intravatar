@@ -26,8 +26,12 @@ var (
 	fallbackDefault = ""
 )
 
+func createPath(hash string) string {
+	return fmt.Sprintf("%s/%s", *dataDir, hash)
+}
+
 func loadImage(hash string, w io.Writer) error {
-	filename := fmt.Sprintf("%s/%s", *dataDir, hash)
+	filename := createPath(hash)
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		if fallbackUrl == "" {
 			log.Printf("%s does not exist, falling back to default", filename)
@@ -103,7 +107,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	h := md5.New()
 	io.WriteString(h, email) // FIXME trim and toLowerCase!
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	filename := fmt.Sprintf("%s/%s", *dataDir, hash)
+	filename := createPath(hash)
 
 	f, err := os.Create(filename)
 	if err != nil {
