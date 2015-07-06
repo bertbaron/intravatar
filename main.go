@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"bytes"
 )
 
 var (
@@ -30,42 +31,69 @@ var (
 )
 
 type Avatar struct {
-	mimetype string
 	size     int
 	data     []byte
+}
+
+type Request struct {
+	hash string
+	size int
+}
+
+// Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
+func retrieveFromRemote(request Request) *Avatar {
+	if remoteUrl == "" {
+		return nil
+	}
+	options := fmt.Sprintf("s=%d", request.size) 
+	if remoteDefault != "" {
+		options += "&d=" + remoteDefault
+	}
+	remote := remoteUrl + "/" + request.hash + "?" + options
+	resp, err2 := http.Get(remote)
+	if err2 != nil {
+		log.Printf("Remote lookup of %s failed with error: %s", remote, err2)
+		return nil
+	}
+	if resp.StatusCode == 404 {
+		log.Printf("Avatar not found on remote")
+		return nil
+	} else {
+		// TODO check for other status codes?
+		log.Printf("Response: %v", resp)
+		b := new(bytes.Buffer)
+		_, e := io.Copy(b, resp.Body)
+		if e != nil {
+			log.Printf("Could not read image from remote: %s", e)
+		}
+		return &Avatar{size: -1, data: b.Bytes()}
+	}
 }
 
 func createPath(hash string) string {
 	return fmt.Sprintf("%s/%s", *dataDir, hash)
 }
 
-func loadImage(hash string, w io.Writer) error {
+func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) error {
+	b := bytes.NewBuffer(avatar.data)
+	_, e := io.Copy(w, b)
+	// We could write the mimetype in the header, but wget -S suggest that the
+	// mimetype is already automagically detected...
+	return e
+}
+
+func loadImage(hash string, w http.ResponseWriter) error {
 	filename := createPath(hash)
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		if remoteUrl == "" {
-			log.Printf("%s does not exist, falling back to default", filename)
+		avatar := retrieveFromRemote(Request{hash: hash, size: -1})
+		if avatar == nil {
 			filename = defaultImage
 		} else {
-			log.Printf("%s does not exist, redirecting to %s", filename, remoteUrl)
-			options := ""
-			if remoteDefault != "" {
-				options = fmt.Sprintf("?d=%s", remoteDefault)
+			e := writeAvatarResult(w, avatar)
+			if e != nil {
+				return e
 			}
-			remote := fmt.Sprintf("%s/%s%s", remoteUrl, hash, options)
-			resp, err2 := http.Get(remote)
-			if err2 != nil {
-				log.Printf("Remote lookup of %s failed with error: %s", remote, err2)
-			} else {
-				if resp.StatusCode == 404 {
-					log.Printf("Avatar not found on remote, falling back to default")
-				} else {
-					// TODO check for other status codes?
-					log.Printf("Response: %v", resp)
-					_, e := io.Copy(w, resp.Body)
-					return e
-				}
-			}
-			filename = "resources/mm"
+			return nil
 		}
 	}
 
