@@ -26,7 +26,7 @@ var (
 	fallbackDefault = ""
 )
 
-func writeFile(hash string, w io.Writer) error {
+func loadImage(hash string, w io.Writer) error {
 	filename := fmt.Sprintf("%s/%s", *dataDir, hash)
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		if fallbackUrl == "" {
@@ -69,7 +69,7 @@ func writeFile(hash string, w io.Writer) error {
 }
 
 func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
-	writeFile(title, w)
+	loadImage(title, w)
 }
 
 type Page struct {
