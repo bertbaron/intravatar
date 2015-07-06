@@ -87,29 +87,22 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request, title string) {
-	log.Print("* uploadHandler *")
 	renderTemplate(w, "upload", &Page{Title: "Upload your avatar"})
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
-	//	r.ParseForm()
-	log.Print("* saveHandler *")
-	log.Printf("Form: %v", r.Form)
 	email := r.FormValue("email")
-	log.Printf("email: %v", email)
-	file, header, err := r.FormFile("datafile")
+	log.Printf("Saving image for email address: %v", email)
+	file, _, err := r.FormFile("datafile")
 	if err != nil {
 		log.Print("Error: ", err)
 		fmt.Fprintf(w, "<p>Please chooce a file to upload</p>")
 		return
 	}
-	log.Printf("datafile: %v", file)
-	log.Printf("header: %v", header)
+	
 	h := md5.New()
-	io.WriteString(h, email)
+	io.WriteString(h, email) // FIXME trim and toLowerCase!
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	log.Printf("hash: %s", hash)
-
 	filename := fmt.Sprintf("%s/%s", *dataDir, hash)
 
 	f, err := os.Create(filename)
