@@ -76,22 +76,17 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 	loadImage(title, w)
 }
 
-type Page struct {
-	Title string
-	Avatar string
-}
-
 var templates = template.Must(template.ParseFiles("resources/upload.html", "resources/view.html"))
 
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
+	err := templates.ExecuteTemplate(w, tmpl+".html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request, title string) {
-	renderTemplate(w, "upload", &Page{Title: "Upload your avatar"})
+	renderTemplate(w, "upload", map[string]string{"Title" : "Upload your avatar"})
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -118,7 +113,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	defer f.Close()
 	io.Copy(f, file)
 	
-	renderTemplate(w, "view", &Page{Avatar: fmt.Sprintf("/avatar/%s", hash)})
+	renderTemplate(w, "view", map[string]string{"Avatar" : fmt.Sprintf("/avatar/%s", hash)})
 }
 
 var validPath = regexp.MustCompile("^/(avatar|upload)/([a-zA-Z0-9]+)(/.*)?$")
