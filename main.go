@@ -118,7 +118,7 @@ func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
 	avatar := cache[request]
 	if avatar == nil {
 		avatar = retrieveImage(request, w, r)
-		cache[request]=avatar	
+		cache[request] = avatar
 	}
 	if avatar == nil {
 		http.NotFound(w, r)
