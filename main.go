@@ -97,7 +97,7 @@ func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
 	}
 }
 
-func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
+func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Avatar {
 	avatar := retrieveFromLocal(request)
 	if avatar == nil {
 		avatar = retrieveFromRemote(request)
@@ -108,7 +108,18 @@ func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
 	if avatar == nil {
 		avatar = readFromFile("resources/mm")
 	}
+	return avatar
+}
 
+// VERY SIMPLE NOT THREAD-SAFE CACHE, JUST FOR NOW!
+var cache = make(map[Request]*Avatar)
+
+func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
+	avatar := cache[request]
+	if avatar == nil {
+		avatar = retrieveImage(request, w, r)
+		cache[request]=avatar	
+	}
 	if avatar == nil {
 		http.NotFound(w, r)
 	} else {
