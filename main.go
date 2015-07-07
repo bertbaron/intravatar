@@ -5,8 +5,13 @@ import (
 	"crypto/md5"
 	"flag"
 	"fmt"
+	"github.com/nfnt/resize"
 	"github.com/vharitonsky/iniflags"
 	"html/template"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"log"
 	"net/http"
@@ -44,14 +49,39 @@ type Request struct {
 	size int
 }
 
-func readImage(reader io.Reader, size int) *Avatar {
+// scales the avatar (altering it!)
+func scale(avatar *Avatar, size int) error {
+	image, format, err := image.Decode(bytes.NewBuffer(avatar.data))
+	if err != nil {
+		return err
+	}
+	actualSize := image.Bounds().Dx() // assume square
+	if size == actualSize {
+		return nil
+	}
+	log.Printf("Resizing image from %vx%v to %vx%v", actualSize, actualSize, size, size)
+	resized := resize.Resize(uint(size), uint(size), image, resize.Bicubic)
+	b := new(bytes.Buffer)
+	switch format {
+	case "jpeg":
+		jpeg.Encode(b, resized, nil)
+	case "gif":
+		gif.Encode(b, resized, nil)
+	case "png":
+		png.Encode(b, resized)
+	}
+	avatar.data = b.Bytes()
+	return nil
+}
+
+func readImage(reader io.Reader) *Avatar {
 	b := new(bytes.Buffer)
 	if _, e := io.Copy(b, reader); e != nil {
 		log.Printf("Could not read image", e)
 		return nil
 	}
 	// FIXME scale if necessary
-	return &Avatar{size: size, data: b.Bytes()}
+	return &Avatar{size: -1, data: b.Bytes()}
 }
 
 func readFromFile(filename string, size int) *Avatar {
@@ -61,11 +91,17 @@ func readFromFile(filename string, size int) *Avatar {
 		return nil
 	}
 	defer file.Close()
-	avatar := readImage(file, size)
+	avatar := readImage(file)
+	err = scale(avatar, size)
+	if err != nil {
+		log.Printf("Could not scale image")
+		return nil // don't return the image, if we can't scale it it is probably corrupt
+	}
+
 	avatar.cacheControl = "300"
 	if info, e := os.Stat(filename); e == nil {
 		timestamp := info.ModTime().UTC()
-		avatar.lastModified = timestamp.Format(http.TimeFormat) 
+		avatar.lastModified = timestamp.Format(http.TimeFormat)
 	} else {
 		avatar.lastModified = "Sat, 1 Jan 2000 12:00:00 GMT"
 	}
@@ -96,7 +132,8 @@ func retrieveFromRemote(request Request) *Avatar {
 		log.Printf("Avatar not found on remote")
 		return nil
 	}
-	avatar := readImage(resp.Body, request.size)
+	avatar := readImage(resp.Body)
+	avatar.size = request.size // assume image is scaled by remote service
 	avatar.cacheControl = resp.Header.Get("Cache-Control")
 	avatar.lastModified = resp.Header.Get("Last-Modified")
 	return avatar
@@ -107,7 +144,9 @@ func createPath(hash string) string {
 }
 
 func setHeaderField(w http.ResponseWriter, key string, value string) {
-	if value != "" { w.Header().Set(key, value) }
+	if value != "" {
+		w.Header().Set(key, value)
+	}
 }
 
 func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
