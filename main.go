@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 var (
@@ -40,7 +41,7 @@ type Request struct {
 	size int
 }
 
-func readImage(reader io.Reader) *Avatar {
+func readImage(reader io.Reader, size int) *Avatar {
 	b := new(bytes.Buffer)
 	if _, e := io.Copy(b, reader); e != nil {
 		log.Printf("Could not read image", e)
@@ -49,18 +50,18 @@ func readImage(reader io.Reader) *Avatar {
 	return &Avatar{size: -1, data: b.Bytes()}
 }
 
-func readFromFile(filename string) *Avatar {
+func readFromFile(filename string, size int) *Avatar {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Printf("Error reading file: %v", err)
 		return nil
 	}
 	defer file.Close()
-	return readImage(file)
+	return readImage(file, size)
 }
 
 func retrieveFromLocal(request Request) *Avatar {
-	return readFromFile(createPath(request.hash))
+	return readFromFile(createPath(request.hash), request.size)
 }
 
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
@@ -82,7 +83,7 @@ func retrieveFromRemote(request Request) *Avatar {
 		log.Printf("Avatar not found on remote")
 		return nil
 	}
-	return readImage(resp.Body)
+	return readImage(resp.Body, request.size)
 }
 
 func createPath(hash string) string {
@@ -103,10 +104,10 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 		avatar = retrieveFromRemote(request)
 	}
 	if avatar == nil {
-		avatar = readFromFile(defaultImage)
+		avatar = readFromFile(defaultImage, request.size)
 	}
 	if avatar == nil {
-		avatar = readFromFile("resources/mm")
+		avatar = readFromFile("resources/mm", request.size)
 	}
 	return avatar
 }
@@ -115,6 +116,7 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 var cache = make(map[Request]*Avatar)
 
 func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
+	log.Printf("Loading image: %v", request)
 	avatar := cache[request]
 	if avatar == nil {
 		avatar = retrieveImage(request, w, r)
@@ -128,7 +130,17 @@ func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
 }
 
 func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
-	loadImage(Request{hash: title, size: -1}, w, r)
+	r.ParseForm()
+	sizeParam := r.FormValue("s")
+	size := 80
+	if sizeParam != "" {
+		if s, err := strconv.Atoi(sizeParam); err == nil {
+			size = s
+			if size > 512 { size = 512 }
+			if size < 8 { size = 8 }
+		}
+	}
+	loadImage(Request{hash: title, size: size}, w, r)
 }
 
 var templates = template.Must(template.ParseFiles("resources/upload.html", "resources/view.html"))
@@ -175,7 +187,7 @@ var validPath = regexp.MustCompile("^/(avatar|upload)/([a-zA-Z0-9]+)(/.*)?$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Request: %v", r)
+		//		log.Printf("Request: %v", r)
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			log.Print("Invalid request: ", r.URL)
