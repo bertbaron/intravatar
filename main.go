@@ -112,16 +112,9 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 	return avatar
 }
 
-// VERY SIMPLE NOT THREAD-SAFE CACHE, JUST FOR NOW!
-var cache = make(map[Request]*Avatar)
-
 func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
 	log.Printf("Loading image: %v", request)
-	avatar := cache[request]
-	if avatar == nil {
-		avatar = retrieveImage(request, w, r)
-		cache[request] = avatar
-	}
+	avatar := retrieveImage(request, w, r)
 	if avatar == nil {
 		http.NotFound(w, r)
 	} else {
@@ -136,8 +129,12 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if sizeParam != "" {
 		if s, err := strconv.Atoi(sizeParam); err == nil {
 			size = s
-			if size > 512 { size = 512 }
-			if size < 8 { size = 8 }
+			if size > 512 {
+				size = 512
+			}
+			if size < 8 {
+				size = 8
+			}
 		}
 	}
 	loadImage(Request{hash: title, size: size}, w, r)
