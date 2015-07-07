@@ -34,6 +34,9 @@ var (
 type Avatar struct {
 	size int
 	data []byte
+	// below are used in header fields
+	cacheControl string
+	lastModified string
 }
 
 type Request struct {
@@ -47,7 +50,8 @@ func readImage(reader io.Reader, size int) *Avatar {
 		log.Printf("Could not read image", e)
 		return nil
 	}
-	return &Avatar{size: -1, data: b.Bytes()}
+	// FIXME scale if necessary
+	return &Avatar{size: size, data: b.Bytes()}
 }
 
 func readFromFile(filename string, size int) *Avatar {
@@ -57,7 +61,15 @@ func readFromFile(filename string, size int) *Avatar {
 		return nil
 	}
 	defer file.Close()
-	return readImage(file, size)
+	avatar := readImage(file, size)
+	avatar.cacheControl = "300"
+	if info, e := os.Stat(filename); e == nil {
+		timestamp := info.ModTime().UTC()
+		avatar.lastModified = timestamp.Format(http.TimeFormat) 
+	} else {
+		avatar.lastModified = "Sat, 1 Jan 2000 12:00:00 GMT"
+	}
+	return avatar
 }
 
 func retrieveFromLocal(request Request) *Avatar {
@@ -74,6 +86,7 @@ func retrieveFromRemote(request Request) *Avatar {
 		options += "&d=" + remoteDefault
 	}
 	remote := remoteUrl + "/" + request.hash + "?" + options
+	log.Printf("Retrieving from: %s", remote)
 	resp, err2 := http.Get(remote)
 	if err2 != nil {
 		log.Printf("Remote lookup of %s failed with error: %s", remote, err2)
@@ -83,14 +96,23 @@ func retrieveFromRemote(request Request) *Avatar {
 		log.Printf("Avatar not found on remote")
 		return nil
 	}
-	return readImage(resp.Body, request.size)
+	avatar := readImage(resp.Body, request.size)
+	avatar.cacheControl = resp.Header.Get("Cache-Control")
+	avatar.lastModified = resp.Header.Get("Last-Modified")
+	return avatar
 }
 
 func createPath(hash string) string {
 	return fmt.Sprintf("%s/%s", *dataDir, hash)
 }
 
+func setHeaderField(w http.ResponseWriter, key string, value string) {
+	if value != "" { w.Header().Set(key, value) }
+}
+
 func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
+	setHeaderField(w, "Last-Modified", avatar.lastModified)
+	setHeaderField(w, "Cache-Control", avatar.cacheControl)
 	b := bytes.NewBuffer(avatar.data)
 	_, err := io.Copy(w, b)
 	if err != nil {
@@ -196,7 +218,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
-var fallbackDefaultPattern = regexp.MustCompile("^fallback:([a-zA-Z]+)$")
+var fallbackDefaultPattern = regexp.MustCompile("^remote:([a-zA-Z]+)$")
 
 func main() {
 	iniflags.Parse()
