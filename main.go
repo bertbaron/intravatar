@@ -18,6 +18,8 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
+	"time"
 )
 
 var (
@@ -25,9 +27,10 @@ var (
 	port    = flag.Int("port", 8080, "Webserver port number.")
 	remote  = flag.String("remote", "http://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
 		"no avatar is found, use 'none' for no remote.")
-	dflt = flag.String("default", "resources/mm", "Default avatar. Use 'remote' to use the default of the remote "+
-		"service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passes as "+
-		"'?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.")
+	dflt = flag.String("default", "remote:monsterid", "Default avatar. Use 'remote' to use the default of the remote\n"+
+		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passes as\n"+
+		"    '?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.\n"+
+		"    If no remote and no local default is configured, resources/mm is used as default.")
 )
 
 var (
@@ -80,7 +83,6 @@ func readImage(reader io.Reader) *Avatar {
 		log.Printf("Could not read image", e)
 		return nil
 	}
-	// FIXME scale if necessary
 	return &Avatar{size: -1, data: b.Bytes()}
 }
 
@@ -98,7 +100,7 @@ func readFromFile(filename string, size int) *Avatar {
 		return nil // don't return the image, if we can't scale it it is probably corrupt
 	}
 
-	avatar.cacheControl = "300"
+	avatar.cacheControl = "max-age=300"
 	if info, e := os.Stat(filename); e == nil {
 		timestamp := info.ModTime().UTC()
 		avatar.lastModified = timestamp.Format(http.TimeFormat)
@@ -214,6 +216,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, title string) {
 	renderTemplate(w, "upload", map[string]string{"Title": "Upload your avatar"})
 }
 
+func createHash(email string) string {
+	h := md5.New()
+	io.WriteString(h, strings.TrimSpace(strings.ToLower(email)))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	email := r.FormValue("email")
 	log.Printf("Saving image for email address: %v", email)
@@ -224,9 +232,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 
-	h := md5.New()
-	io.WriteString(h, email) // FIXME trim and toLowerCase!
-	hash := fmt.Sprintf("%x", h.Sum(nil))
+	hash := createHash(email)
 	filename := createPath(hash)
 
 	f, err := os.Create(filename)
@@ -252,8 +258,10 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 			http.NotFound(w, r)
 			return
 		}
-		log.Print("Handling request: ", r.URL)
+		log.Printf("Handling request %v from %v", r.URL, strings.Split(r.RemoteAddr, ":")[0])
+		start := time.Now()
 		fn(w, r, m[2])
+		log.Printf("Handled request %v in %v", r.URL, time.Since(start))
 	}
 }
 
