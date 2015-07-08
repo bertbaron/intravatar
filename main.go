@@ -111,7 +111,7 @@ func readFromFile(filename string, size int) *Avatar {
 }
 
 func retrieveFromLocal(request Request) *Avatar {
-	return readFromFile(createPath(request.hash), request.size)
+	return readFromFile(createAvatarPath(request.hash), request.size)
 }
 
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
@@ -141,8 +141,8 @@ func retrieveFromRemote(request Request) *Avatar {
 	return avatar
 }
 
-func createPath(hash string) string {
-	return fmt.Sprintf("%s/%s", *dataDir, hash)
+func createAvatarPath(hash string) string {
+	return fmt.Sprintf("%s/avatars/%s", *dataDir, hash)
 }
 
 func setHeaderField(w http.ResponseWriter, key string, value string) {
@@ -233,7 +233,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	}
 
 	hash := createHash(email)
-	filename := createPath(hash)
+	filename := createAvatarPath(hash)
 
 	f, err := os.Create(filename)
 	if err != nil {
