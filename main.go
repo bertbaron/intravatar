@@ -13,6 +13,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,8 +21,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/oliamb/cutter"
 )
 
+// Options
 var (
 	dataDir = flag.String("data", "data", "Path to data files relative to current working dir.")
 	port    = flag.Int("port", 8080, "Webserver port number.")
@@ -37,8 +40,13 @@ var (
 	defaultImage  = "resources/mm"
 	remoteUrl     = ""
 	remoteDefault = ""
+	templates     *template.Template
 )
 
+const (
+	minSize = 8
+	maxSize = 512
+)
 type Avatar struct {
 	size int
 	data []byte
@@ -52,28 +60,72 @@ type Request struct {
 	size int
 }
 
+func avatar2Image(avatar *Avatar) (img image.Image, format string, err error) {
+	return image.Decode(bytes.NewBuffer(avatar.data))
+}
+
 // scales the avatar (altering it!)
-func scale(avatar *Avatar, size int) error {
-	image, format, err := image.Decode(bytes.NewBuffer(avatar.data))
-	if err != nil {
-		return err
-	}
-	actualSize := image.Bounds().Dx() // assume square
-	if size == actualSize {
-		return nil
-	}
-	log.Printf("Resizing image from %vx%v to %vx%v", actualSize, actualSize, size, size)
-	resized := resize.Resize(uint(size), uint(size), image, resize.Bicubic)
+func image2Avatar(avatar *Avatar, img image.Image, format string) {
 	b := new(bytes.Buffer)
 	switch format {
 	case "jpeg":
-		jpeg.Encode(b, resized, nil)
+		jpeg.Encode(b, img, nil)
 	case "gif":
-		gif.Encode(b, resized, nil)
+		gif.Encode(b, img, nil)
 	case "png":
-		png.Encode(b, resized)
+		png.Encode(b, img)
 	}
 	avatar.data = b.Bytes()
+	
+}
+
+// scales the avatar (altering it!)
+func scale(avatar *Avatar, size int) error {
+	img, format, err := avatar2Image(avatar)
+	if err != nil {
+		return err
+	}
+	actualSize := img.Bounds().Dx() // assume square
+	if size == actualSize {
+		return nil
+	}
+	log.Printf("Resizing img from %vx%v to %vx%v", actualSize, actualSize, size, size)
+	resized := resize.Resize(uint(size), uint(size), img, resize.Bicubic)
+	image2Avatar(avatar, resized, format)
+	return nil
+}
+
+func min(x, y int) int {
+	if x <= y {
+		return x
+	}
+	return y
+}
+
+func cropAndScale(avatar *Avatar) error {
+	img, format, err := avatar2Image(avatar)
+	if err != nil {
+		return err
+	}
+	x := img.Bounds().Dx()
+	y := img.Bounds().Dy()
+	size := min(x, y)
+	if x != y {
+		log.Printf("Cropping img from %vx%v to %vx%v", x, y, size, size)
+		img, err = cutter.Crop(img, cutter.Config{
+  			Width:  size,
+  			Height: size,
+  			Mode: cutter.Centered})
+		if err != nil {
+			return err
+		}
+	}
+	if size <= maxSize {
+		return nil
+	}
+	log.Printf("Resizing img from %vx%v to %vx%v", size, size, maxSize, maxSize)
+	resized := resize.Resize(uint(maxSize), uint(maxSize), img, resize.Bicubic)
+	image2Avatar(avatar, resized, format)
 	return nil
 }
 
@@ -200,18 +252,16 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if sizeParam != "" {
 		if s, err := strconv.Atoi(sizeParam); err == nil {
 			size = s
-			if size > 512 {
-				size = 512
+			if size > maxSize {
+				size = maxSize
 			}
-			if size < 8 {
-				size = 8
+			if size < minSize {
+				size = minSize
 			}
 		}
 	}
 	loadImage(Request{hash: title, size: size}, w, r)
 }
-
-var templates = template.Must(template.ParseFiles("resources/upload.html", "resources/save.html", "resources/index.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", data)
@@ -235,7 +285,17 @@ func validateAndResize(file io.Reader) (*Avatar, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = cropAndScale(avatar)
+	if err != nil {
+		return nil, err
+	}
 	return avatar, nil
+}
+
+func renderSaveError(w http.ResponseWriter, message string, err error) {
+	log.Printf("Error: %v (%v)", message, err)
+	errMsg := fmt.Sprintf("%v", err)
+	renderTemplate(w, "saveError", map[string]string{"Message": message, "Error": errMsg})
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -243,14 +303,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	log.Printf("Saving image for email address: %v", email)
 	file, _, err := r.FormFile("image")
 	if err != nil {
-		log.Print("Error: ", err)
-		fmt.Fprintf(w, "<p>Please chooce a file to upload</p>")
+		renderSaveError(w, "Please chooce a file to upload", err)
 		return
 	}
 	avatar, err2 := validateAndResize(file)
 	if err2 != nil {
-		log.Print("Error: ", err)
-		fmt.Fprintf(w, "<p>Failed to read image file. Note that only jpeg, png and gif images are supported</p>")
+		renderSaveError(w, "Failed to read image file. Note that only jpeg, png and gif images are supported", err2)
 		return
 	}
 
@@ -259,13 +317,16 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 	f, err := os.Create(filename)
 	if err != nil {
-		log.Print("Error: ", err)
-		fmt.Fprintf(w, "<p>Error while uploading file</p>")
+		renderSaveError(w, "Error while creating file", err)
 		return
 	}
 	defer f.Close()
 	b := bytes.NewBuffer(avatar.data)
-	io.Copy(f, b)
+	_, err = io.Copy(f, b)
+	if err != nil {
+		renderSaveError(w, "Failed to write file", err)
+		return
+	}
 
 	renderTemplate(w, "save", map[string]string{"Avatar": fmt.Sprintf("/avatar/%s", hash)})
 }
@@ -304,8 +365,21 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string), pattern st
 
 var fallbackDefaultPattern = regexp.MustCompile("^remote:([a-zA-Z]+)$")
 
+func initTemplates() {
+	files, err := ioutil.ReadDir("resources/templates")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var fileNames []string
+	for _, file := range files {
+		fileNames = append(fileNames, "resources/templates/"+file.Name())
+	}
+	templates = template.Must(template.ParseFiles(fileNames...))
+}
+
 func main() {
 	iniflags.Parse()
+	initTemplates()
 
 	log.Printf("data dir = %s\n", *dataDir)
 	address := fmt.Sprintf(":%d", *port)
