@@ -275,7 +275,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string), pattern st
 		log.Printf("Handling request %v %v from %v", r.Method, r.URL, strings.Split(r.RemoteAddr, ":")[0])
 		start := time.Now()
 		fn(w, r, m[1])
-		log.Printf("Handled request %v in %v", r.URL, time.Since(start))
+		log.Printf("Handled request %v %v in %v", r.Method, r.URL, time.Since(start))
 	}
 }
 
