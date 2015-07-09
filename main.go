@@ -203,7 +203,7 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 	loadImage(Request{hash: title, size: size}, w, r)
 }
 
-var templates = template.Must(template.ParseFiles("resources/upload.html", "resources/view.html"))
+var templates = template.Must(template.ParseFiles("resources/upload.html", "resources/save.html", "resources/index.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", data)
@@ -213,7 +213,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request, title string) {
-	renderTemplate(w, "upload", map[string]string{"Title": "Upload your avatar"})
+	renderTemplate(w, "upload", map[string]string{})
 }
 
 func createHash(email string) string {
@@ -244,23 +244,37 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	defer f.Close()
 	io.Copy(f, file)
 
-	renderTemplate(w, "view", map[string]string{"Avatar": fmt.Sprintf("/avatar/%s", hash)})
+	renderTemplate(w, "save", map[string]string{"Avatar": fmt.Sprintf("/avatar/%s", hash)})
 }
 
-var validPath = regexp.MustCompile("^/(avatar|upload)/([a-zA-Z0-9]+)(/.*)?$")
+func mainHandler(w http.ResponseWriter, r *http.Request, title string) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "localhost"
+	}
+	portName := ""
+	if *port != 80 {
+		portName = fmt.Sprintf(":%d", *port)
+	}
+	url := "http://" + hostname + portName + "/avatar/"
+	renderTemplate(w, "index", map[string]string{"AvatarLink": url, "HostName": hostname})
+}
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+// Creates a http request handler
+// pattern is a regular expression that validates the URL. The first matching group is passes to the handler as title
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string), pattern string) http.HandlerFunc {
+	regex := regexp.MustCompile(pattern)
 	return func(w http.ResponseWriter, r *http.Request) {
 		//		log.Printf("Request: %v", r)
-		m := validPath.FindStringSubmatch(r.URL.Path)
+		m := regex.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			log.Print("Invalid request: ", r.URL)
 			http.NotFound(w, r)
 			return
 		}
-		log.Printf("Handling request %v from %v", r.URL, strings.Split(r.RemoteAddr, ":")[0])
+		log.Printf("Handling request %v %v from %v", r.Method, r.URL, strings.Split(r.RemoteAddr, ":")[0])
 		start := time.Now()
-		fn(w, r, m[2])
+		fn(w, r, m[1])
 		log.Printf("Handled request %v in %v", r.URL, time.Since(start))
 	}
 }
@@ -293,9 +307,10 @@ func main() {
 	}
 
 	log.Printf("Listening on %s\n", address)
-	http.HandleFunc("/avatar/", makeHandler(avatarHandler))
-	http.HandleFunc("/upload/form/", makeHandler(uploadHandler))
-	http.HandleFunc("/upload/save/", makeHandler(saveHandler))
+	http.HandleFunc("/", makeHandler(mainHandler, "^/()$"))
+	http.HandleFunc("/avatar/", makeHandler(avatarHandler, "^/avatar/([a-zA-Z0-9]+)$"))
+	http.HandleFunc("/upload/", makeHandler(uploadHandler, "^/(upload)/$"))
+	http.HandleFunc("/save/", makeHandler(saveHandler, "^/(save)/$"))
 	x := http.ListenAndServe(address, nil)
 	fmt.Println("Result: ", x)
 }

@@ -31,7 +31,6 @@ go build
 intravatar
 ```
 
-After this, images can be uploaded via [http://localhost:8080/upload/form](http://localhost:8080/upload/form). The url `http://<your-host-id>:8080/avatar/` should be
-used to configure any client (replacing for example `http://www.gravatar.com/avatar/`).
+After this, point your webbrowser to [http://localhost:8080/upload/form](http://localhost:8080/upload/form).
 
 Run `./intravatar -h` to get a list of command-line options.
