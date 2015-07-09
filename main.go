@@ -225,7 +225,7 @@ func createHash(email string) string {
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	email := r.FormValue("email")
 	log.Printf("Saving image for email address: %v", email)
-	file, _, err := r.FormFile("datafile")
+	file, _, err := r.FormFile("image")
 	if err != nil {
 		log.Print("Error: ", err)
 		fmt.Fprintf(w, "<p>Please chooce a file to upload</p>")
