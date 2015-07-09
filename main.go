@@ -77,13 +77,21 @@ func scale(avatar *Avatar, size int) error {
 	return nil
 }
 
-func readImage(reader io.Reader) *Avatar {
+func strictReadImage(reader io.Reader) (*Avatar, error) {
 	b := new(bytes.Buffer)
 	if _, e := io.Copy(b, reader); e != nil {
-		log.Printf("Could not read image", e)
+		return nil, e
+	}
+	return &Avatar{size: -1, data: b.Bytes()}, nil
+}
+
+func readImage(reader io.Reader) *Avatar {
+	avatar, err := strictReadImage(reader)
+	if err != nil {
+		log.Printf("Could not read image", err)
 		return nil
 	}
-	return &Avatar{size: -1, data: b.Bytes()}
+	return avatar
 }
 
 func readFromFile(filename string, size int) *Avatar {
@@ -96,7 +104,7 @@ func readFromFile(filename string, size int) *Avatar {
 	avatar := readImage(file)
 	err = scale(avatar, size)
 	if err != nil {
-		log.Printf("Could not scale image")
+		log.Printf("Could not scale image: %v", err)
 		return nil // don't return the image, if we can't scale it it is probably corrupt
 	}
 
@@ -222,6 +230,14 @@ func createHash(email string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
+func validateAndResize(file io.Reader) (*Avatar, error) {
+	avatar, err := strictReadImage(file)
+	if err != nil {
+		return nil, err
+	}
+	return avatar, nil
+}
+
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	email := r.FormValue("email")
 	log.Printf("Saving image for email address: %v", email)
@@ -229,6 +245,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		log.Print("Error: ", err)
 		fmt.Fprintf(w, "<p>Please chooce a file to upload</p>")
+		return
+	}
+	avatar, err2 := validateAndResize(file)
+	if err2 != nil {
+		log.Print("Error: ", err)
+		fmt.Fprintf(w, "<p>Failed to read image file. Note that only jpeg, png and gif images are supported</p>")
 		return
 	}
 
@@ -242,7 +264,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 	defer f.Close()
-	io.Copy(f, file)
+	b := bytes.NewBuffer(avatar.data)
+	io.Copy(f, b)
 
 	renderTemplate(w, "save", map[string]string{"Avatar": fmt.Sprintf("/avatar/%s", hash)})
 }
