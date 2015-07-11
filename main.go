@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"github.com/vharitonsky/iniflags"
@@ -16,6 +17,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
+	"gopkg.in/gomail.v1"
 )
 
 // Options
@@ -28,6 +33,9 @@ var (
 		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passes as\n"+
 		"    '?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.\n"+
 		"    If no remote and no local default is configured, resources/mm is used as default.")
+
+	smtpHost = flag.String("smtp-host", "", "SMTP host used for email confirmation")
+	smtpPort = flag.Int("smtp-port", 25, "SMTP port")
 )
 
 var (
@@ -104,6 +112,14 @@ func retrieveFromRemote(request Request) *Avatar {
 
 func createAvatarPath(hash string) string {
 	return fmt.Sprintf("%s/avatars/%s", *dataDir, hash)
+}
+
+func createUnconfirmedAvatarPath(hash string, token string) string {
+	return fmt.Sprintf("%s/unconfirmed/%s-%s", *dataDir, token, hash)
+}
+
+func getUnconfirmedDir() string {
+	return fmt.Sprintf("%s/unconfirmed", *dataDir)
 }
 
 func setHeaderField(w http.ResponseWriter, key string, value string) {
@@ -193,13 +209,91 @@ func validateAndResize(file io.Reader) (*Avatar, error) {
 	return avatar, nil
 }
 
+func sendConfirmationEmail(email string, token string) error {
+	address := fmt.Sprintf("%v:%v", *smtpHost, *smtpPort)
+	log.Printf("Sending confiration email to %v with confirmation token %v", email, address, token)
+
+	from := "developers@asset-control.com"
+	to := email
+	title := "Please confirm your avatar upload"
+ 
+ 	url := getServiceUrl() + "confirm/" + token
+ 	link := fmt.Sprintf("<a href=\"%s\">%s</a>", url, url)
+	body := "Thank you for uploading your avatar. You can confirm your upload by clicking this link: " + link;
+ 
+	// Option 3: using Gomail
+    msg := gomail.NewMessage()
+    msg.SetHeader("From", from)
+    msg.SetHeader("To", to)
+    msg.SetHeader("Subject", title)
+    msg.SetBody("text/html", body)
+
+	// FIXME add option to skip tls
+    mailer := gomail.NewCustomMailer(address, nil, gomail.SetTLSConfig(&tls.Config{InsecureSkipVerify: true}))
+    if err := mailer.Send(msg); err != nil {
+        panic(err)
+    }	
+	return nil
+}
+
+func createToken() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
 func renderSaveError(w http.ResponseWriter, message string, err error) {
 	log.Printf("Error: %v (%v)", message, err)
 	errMsg := fmt.Sprintf("%v", err)
 	renderTemplate(w, "saveError", map[string]string{"Message": message, "Error": errMsg})
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+func getConfirmationFile(token string) (filepath string, hash string, err error) {
+	files, err := ioutil.ReadDir(getUnconfirmedDir())
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		filename := file.Name()
+		if strings.HasPrefix(filename, token) {
+			splitted := strings.Split(filename, "-")
+			hash = splitted[1] // FIXME perform range check!
+			return getUnconfirmedDir() + "/" + filename, hash, nil
+		}
+	}
+	return "", "", errors.New("Confirmation expired")
+}
+
+func confirm(w http.ResponseWriter, r *http.Request, token string) {
+	log.Printf("Confirming uploaded avatar with token %v", token)	
+	filepath, hash, err := getConfirmationFile(token)
+	log.Printf("Found confirmation file %v (hash=%v)", filepath, hash)
+	if err != nil {
+		renderSaveError(w, "Error confirming upload", err)
+		return
+	}
+	err = os.Rename(filepath, createAvatarPath(hash))
+	if err != nil {
+		renderSaveError(w, "Error confirming upload", err)
+		return
+	}
+
+	// cache breaker to force website to reload the avatar
+	ns := time.Now().UnixNano()
+	uniq := fmt.Sprintf("%d", ns)
+	
+	// thank you for uploading your avatar...
+	renderTemplate(w, "confirm", map[string]string{"Avatar": fmt.Sprintf("/avatar/%s", hash), "Uniq": uniq})
+}
+
+func confirmHandler(w http.ResponseWriter, r *http.Request, token string) {
+	confirm(w, r, token)
+}
+
+func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 	email := r.FormValue("email")
 	log.Printf("Saving image for email address: %v", email)
 	file, _, err := r.FormFile("image")
@@ -213,8 +307,13 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 
+	token, err3 := createToken()
+	if err3 != nil {
+		renderSaveError(w, "Failed to generate random token", err3)
+		return
+	}
 	hash := createHash(email)
-	filename := createAvatarPath(hash)
+	filename := createUnconfirmedAvatarPath(hash, token)
 
 	f, err := os.Create(filename)
 	if err != nil {
@@ -228,21 +327,42 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		renderSaveError(w, "Failed to write file", err)
 		return
 	}
-
-	renderTemplate(w, "save", map[string]string{"Avatar": fmt.Sprintf("/avatar/%s", hash)})
+	
+	if *smtpHost == "" {
+		// skip e-mail confirmation
+		confirm(w, r, token)
+		return
+	}
+	
+	err = sendConfirmationEmail(email, token)
+	if err != nil {
+		renderSaveError(w, "Failed to send confirmation email", err)
+		return
+	}
+	// a confirmation email has ben send...
+	renderTemplate(w, "save", map[string]string{"Email" : email})
 }
 
-func mainHandler(w http.ResponseWriter, r *http.Request, title string) {
+func getHostName() string {
+	// FIXME hostname should be configurable
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "localhost"
 	}
+	return hostname
+}
+
+func getServiceUrl() string {
 	portName := ""
 	if *port != 80 {
 		portName = fmt.Sprintf(":%d", *port)
 	}
-	url := "http://" + hostname + portName + "/avatar/"
-	renderTemplate(w, "index", map[string]string{"AvatarLink": url, "HostName": hostname})
+	return "http://" + getHostName() + portName + "/"
+}
+
+func mainHandler(w http.ResponseWriter, r *http.Request, title string) {
+	url := getServiceUrl() + "avatar/"
+	renderTemplate(w, "index", map[string]string{"AvatarLink": url, "HostName": getHostName()})
 }
 
 // Creates a http request handler
@@ -309,6 +429,7 @@ func main() {
 	http.HandleFunc("/avatar/", makeHandler(avatarHandler, "^/avatar/([a-zA-Z0-9]+)$"))
 	http.HandleFunc("/upload/", makeHandler(uploadHandler, "^/(upload)/$"))
 	http.HandleFunc("/save/", makeHandler(saveHandler, "^/(save)/$"))
+	http.HandleFunc("/confirm/", makeHandler(confirmHandler, "^/confirm/([a-zA-Z0-9]+)$"))
 	x := http.ListenAndServe(address, nil)
 	fmt.Println("Result: ", x)
 }
