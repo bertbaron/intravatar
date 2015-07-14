@@ -23,7 +23,7 @@ var (
 	dataDir = flag.String("data", "data", "Path to data files relative to current working dir.")
 	host    = flag.String("host", "", "The dns name of this host. Defaults to the systems hostname")
 	port    = flag.Int("port", 8080, "Webserver port number.")
-	remote  = flag.String("remote", "http://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
+	remote  = flag.String("remote", "https://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
 		"no avatar is found, use 'none' for no remote.")
 	dflt = flag.String("default", "remote:monsterid", "Default avatar. Use 'remote' to use the default of the remote\n"+
 		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passes as\n"+
