@@ -110,14 +110,10 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 	size := 80
 	if sizeParam != "" {
 		if s, err := strconv.Atoi(sizeParam); err == nil {
-			size = s
-			if size > maxSize {
-				size = maxSize
-			}
-			if size < minSize {
-				size = minSize
-			}
+			size = max(min(s, maxSize), minSize) 
 		}
 	}
+//	defaultParam := r.FormValue("d")
+	
 	loadImage(Request{hash: title, size: size}, w, r)
 }

@@ -30,14 +30,8 @@ func validateAndResize(file io.Reader) (*Avatar, error) {
 }
 
 func sendConfirmationEmail(email string, token string) error {
-	if *sender == "" {
-		log.Printf("Please configure the sender email address!")
-		return errors.New("Failed to send confirmation email")
-	} 
-	
 	address := fmt.Sprintf("%v:%v", *smtpHost, *smtpPort)
-	log.Printf("Sending confiration email to %v with confirmation token %v", email, address, token)
-
+	log.Printf("Sending confiration email to %v with confirmation token %v", email, token)
 	from := *sender
 	to := email
 	title := "Please confirm your avatar upload"
