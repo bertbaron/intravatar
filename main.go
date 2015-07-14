@@ -21,6 +21,7 @@ import (
 // Options
 var (
 	dataDir = flag.String("data", "data", "Path to data files relative to current working dir.")
+	host    = flag.String("host", "", "The dns name of this host. Defaults to the systems hostname")
 	port    = flag.Int("port", 8080, "Webserver port number.")
 	remote  = flag.String("remote", "http://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
 		"no avatar is found, use 'none' for no remote.")
@@ -31,6 +32,7 @@ var (
 
 	smtpHost = flag.String("smtp-host", "", "SMTP host used for email confirmation")
 	smtpPort = flag.Int("smtp-port", 25, "SMTP port")
+	noTls    = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
 )
 
 var (
@@ -189,10 +191,13 @@ func createHash(email string) string {
 }
 
 func getHostName() string {
-	// FIXME hostname should be configurable
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "localhost"
+	hostname := *host
+	if hostname == "" {
+		var err error
+		hostname, err = os.Hostname()
+		if err != nil {
+			hostname = "localhost"
+		}
 	}
 	return hostname
 }

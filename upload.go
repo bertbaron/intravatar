@@ -48,8 +48,11 @@ func sendConfirmationEmail(email string, token string) error {
 	msg.SetHeader("Subject", title)
 	msg.SetBody("text/html", body)
 
-	// FIXME add option to skip tls
-	mailer := gomail.NewCustomMailer(address, nil, gomail.SetTLSConfig(&tls.Config{InsecureSkipVerify: true}))
+	config := tls.Config{}
+	if *noTls {
+		config.InsecureSkipVerify = true
+	}
+	mailer := gomail.NewCustomMailer(address, nil, gomail.SetTLSConfig(&config))
 	if err := mailer.Send(msg); err != nil {
 		panic(err)
 	}
@@ -80,6 +83,10 @@ func getConfirmationFile(token string) (filepath string, hash string, err error)
 		filename := file.Name()
 		if strings.HasPrefix(filename, token) {
 			splitted := strings.Split(filename, "-")
+			if len(splitted) < 2 {
+				log.Printf("Invalid confirmation file name: %v", filename)
+				return "", "", errors.New("Internal error")
+			}
 			hash = splitted[1] // FIXME perform range check!
 			return getUnconfirmedDir() + "/" + filename, hash, nil
 		}
