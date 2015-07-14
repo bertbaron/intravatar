@@ -30,10 +30,15 @@ func validateAndResize(file io.Reader) (*Avatar, error) {
 }
 
 func sendConfirmationEmail(email string, token string) error {
+	if *sender == "" {
+		log.Printf("Please configure the sender email address!")
+		return errors.New("Failed to send confirmation email")
+	} 
+	
 	address := fmt.Sprintf("%v:%v", *smtpHost, *smtpPort)
 	log.Printf("Sending confiration email to %v with confirmation token %v", email, address, token)
 
-	from := "developers@asset-control.com"
+	from := *sender
 	to := email
 	title := "Please confirm your avatar upload"
 
@@ -54,7 +59,8 @@ func sendConfirmationEmail(email string, token string) error {
 	}
 	mailer := gomail.NewCustomMailer(address, nil, gomail.SetTLSConfig(&config))
 	if err := mailer.Send(msg); err != nil {
-		panic(err)
+		log.Printf("Error sending configuration email: %v", err)
+		return errors.New("Failed to send confirmation email")
 	}
 	return nil
 }

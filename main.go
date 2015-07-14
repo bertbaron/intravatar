@@ -30,6 +30,7 @@ var (
 
 	smtpHost = flag.String("smtp-host", "", "SMTP host used for email confirmation")
 	smtpPort = flag.Int("smtp-port", 25, "SMTP port")
+	sender   = flag.String("sender", "", "Senders email address")
 	noTls    = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
 )
 
