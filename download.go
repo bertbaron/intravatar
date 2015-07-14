@@ -13,7 +13,12 @@ import (
 type Request struct {
 	hash string
 	size int
+	dflt string
 }
+
+const (
+	d_404 = "404"
+)
 
 func readFromFile(filename string, size int) *Avatar {
 	file, err := os.Open(filename)
@@ -49,8 +54,12 @@ func retrieveFromRemote(request Request) *Avatar {
 		return nil
 	}
 	options := fmt.Sprintf("s=%d", request.size)
-	if remoteDefault != "" {
-		options += "&d=" + remoteDefault
+	dflt := remoteDefault
+	if request.dflt != "" {
+		dflt = request.dflt
+	}
+	if dflt != "" {
+		options += "&d=" + dflt
 	}
 	remote := remoteUrl + "/" + request.hash + "?" + options
 	log.Printf("Retrieving from: %s", remote)
@@ -85,10 +94,10 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 	if avatar == nil {
 		avatar = retrieveFromRemote(request)
 	}
-	if avatar == nil {
+	if avatar == nil && request.dflt != d_404 {
 		avatar = readFromFile(defaultImage, request.size)
 	}
-	if avatar == nil {
+	if avatar == nil && request.dflt != d_404 {
 		avatar = readFromFile("resources/mm", request.size)
 	}
 	return avatar
@@ -104,7 +113,16 @@ func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
+// checks if dflt is a valid default image and only then returns it
+// otherwise an empty string is returned
+func validDefault(dflt string) string {
+	if dflt == d_404 {
+		return dflt
+	}
+	return ""
+}
+
+func avatarHandler(w http.ResponseWriter, r *http.Request, hash string) {
 	r.ParseForm()
 	sizeParam := r.FormValue("s")
 	size := 80
@@ -113,7 +131,7 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, title string) {
 			size = max(min(s, maxSize), minSize) 
 		}
 	}
-//	defaultParam := r.FormValue("d")
+	dflt := validDefault(r.FormValue("d"))
 	
-	loadImage(Request{hash: title, size: size}, w, r)
+	loadImage(Request{hash: hash, size: size, dflt: dflt}, w, r)
 }
