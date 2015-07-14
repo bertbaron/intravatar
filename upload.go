@@ -1,7 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/tls"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"gopkg.in/gomail.v1"
 	"io"
 	"io/ioutil"
 	"log"
@@ -9,12 +15,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	"bytes"
-	"crypto/rand"
-	"crypto/tls"
-	"encoding/hex"
-	"errors"
-	"gopkg.in/gomail.v1"
 )
 
 func validateAndResize(file io.Reader) (*Avatar, error) {

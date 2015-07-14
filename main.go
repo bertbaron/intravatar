@@ -43,8 +43,8 @@ var (
 )
 
 const (
-	minSize = 8
-	maxSize = 512
+	minSize    = 8
+	maxSize    = 512
 	configFile = "config.ini"
 )
 
@@ -258,7 +258,7 @@ func main() {
 	if _, e := os.Stat(configFile); e == nil {
 		log.Printf("Default configuration file %v", configFile)
 		iniflags.SetConfigFile(configFile)
-	}	
+	}
 	iniflags.Parse()
 	initTemplates()
 

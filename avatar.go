@@ -1,15 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"github.com/nfnt/resize"
+	"github.com/oliamb/cutter"
 	"image"
-	"bytes"	
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"log"
 	"io"
-	"github.com/nfnt/resize"
-	"github.com/oliamb/cutter"
+	"log"
 )
 
 func min(x, y int) int {
@@ -72,9 +72,9 @@ func cropAndScale(avatar *Avatar) error {
 	if x != y {
 		log.Printf("Cropping img from %vx%v to %vx%v", x, y, size, size)
 		img, err = cutter.Crop(img, cutter.Config{
-  			Width:  size,
-  			Height: size,
-  			Mode: cutter.Centered})
+			Width:  size,
+			Height: size,
+			Mode:   cutter.Centered})
 		if err != nil {
 			return err
 		}
