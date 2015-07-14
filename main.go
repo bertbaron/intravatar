@@ -264,7 +264,7 @@ func getConfirmationFile(token string) (filepath string, hash string, err error)
 			return getUnconfirmedDir() + "/" + filename, hash, nil
 		}
 	}
-	return "", "", errors.New("Confirmation expired")
+	return "", "", errors.New("Confirmation period expired")
 }
 
 func confirm(w http.ResponseWriter, r *http.Request, token string) {
@@ -360,7 +360,7 @@ func getServiceUrl() string {
 	return "http://" + getHostName() + portName + "/"
 }
 
-func mainHandler(w http.ResponseWriter, r *http.Request, title string) {
+func homeHandler(w http.ResponseWriter, r *http.Request, title string) {
 	url := getServiceUrl() + "avatar/"
 	renderTemplate(w, "index", map[string]string{"AvatarLink": url, "HostName": getHostName()})
 }
@@ -398,6 +398,12 @@ func initTemplates() {
 	templates = template.Must(template.ParseFiles(fileNames...))
 }
 
+func serveSingle(pattern string, filename string) {
+    http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, filename)
+    })
+}
+
 func main() {
 	iniflags.Parse()
 	initTemplates()
@@ -425,7 +431,15 @@ func main() {
 	}
 
 	log.Printf("Listening on %s\n", address)
-	http.HandleFunc("/", makeHandler(mainHandler, "^/()$"))
+	http.HandleFunc("/", makeHandler(homeHandler, "^/()$"))
+	
+	// Mandatory root-based resources
+	serveSingle("/favicon.ico", "resources/favicon.ico")
+	
+	// Other static resources
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("resources/static/"))))
+	
+	// Application
 	http.HandleFunc("/avatar/", makeHandler(avatarHandler, "^/avatar/([a-zA-Z0-9]+)$"))
 	http.HandleFunc("/upload/", makeHandler(uploadHandler, "^/(upload)/$"))
 	http.HandleFunc("/save/", makeHandler(saveHandler, "^/(save)/$"))
