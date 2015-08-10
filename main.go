@@ -22,9 +22,9 @@ var (
 	host    = flag.String("host", "", "The dns name of this host. Defaults to the systems hostname")
 	port    = flag.Int("port", 8080, "Webserver port number.")
 	logfile = flag.String("logfile", "", "Path to log file, if empty, the log will go to stderr of the process")
-	
-	remote  = flag.String("remote", "https://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
-		"no avatar is found, use 'none' for no remote.")
+
+	remote = flag.String("remote", "https://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
+		"no avatar is found.")
 	dflt = flag.String("default", "remote:monsterid", "Default avatar. Use 'remote' to use the default of the remote\n"+
 		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passes as\n"+
 		"    '?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.\n"+
@@ -38,7 +38,7 @@ var (
 
 var (
 	defaultImage  = "resources/mm"
-	remoteUrl     = ""
+	remoteUrls    = []string{}
 	remoteDefault = ""
 	templates     *template.Template
 )
@@ -149,22 +149,21 @@ func main() {
 		iniflags.SetConfigFile(configFile)
 	}
 	iniflags.Parse()
-	
+
 	if *logfile != "" {
-		file, err := os.OpenFile(*logfile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		file, err := os.OpenFile(*logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-		    log.Fatalf("error opening file for logging: %v", err)
+			log.Fatalf("error opening file for logging: %v", err)
 		}
 		log.Printf("Logging will be redirected to %v", *logfile)
 		defer file.Close()
 		log.SetOutput(file)
 	}
-	
-	
+
 	if *smtpHost != "" && *sender == "" {
 		if *sender == "" {
 			log.Fatal("It is required to configure 'sender' when smtp host is not empty!")
-		} 
+		}
 	}
 
 	initTemplates()
@@ -172,11 +171,11 @@ func main() {
 	log.Printf("data dir = %s\n", *dataDir)
 	address := fmt.Sprintf(":%d", *port)
 
-	if *remote == "none" {
-		remoteUrl = ""
+	if *remote == "" {
+		remoteUrls = []string{}
 	} else {
-		remoteUrl = *remote
-		log.Printf("Missing avatars will be redirected to %s", remoteUrl)
+		remoteUrls = strings.Split(*remote, ",")
+		log.Printf("Missing avatars will be redirected to %s", remoteUrls)
 	}
 
 	remoteFallbackPattern := regexp.MustCompile("^remote:([a-zA-Z]+)$")

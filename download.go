@@ -49,18 +49,16 @@ func retrieveFromLocal(request Request) *Avatar {
 }
 
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
-func retrieveFromRemote(request Request) *Avatar {
-	if remoteUrl == "" {
-		return nil
-	}
+// dflt is used instead of request.dflt
+func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avatar {
 	options := fmt.Sprintf("s=%d", request.size)
-	dflt := remoteDefault
-	if request.dflt != "" {
-		dflt = request.dflt
-	}
-	if dflt != "" {
-		options += "&d=" + dflt
-	}
+//	dflt := remoteDefault
+//	if request.dflt != "" {
+//		dflt = request.dflt
+//	}
+//	if dflt != "" {
+//		options += "&d=" + dflt
+//	}
 	remote := remoteUrl + "/" + request.hash + "?" + options
 	log.Printf("Retrieving from: %s", remote)
 	resp, err2 := http.Get(remote)
@@ -77,6 +75,20 @@ func retrieveFromRemote(request Request) *Avatar {
 	avatar.cacheControl = resp.Header.Get("Cache-Control")
 	avatar.lastModified = resp.Header.Get("Last-Modified")
 	return avatar
+}
+
+// Retrieves the avatar from the remote services, returning nil if there is no avatar or it could not be retrieved
+func retrieveFromRemote(request Request) *Avatar {
+	l := len(remoteUrls)
+	if l == 0 {
+		return nil
+	}
+	for _, remoteUrl := range remoteUrls[:l-1] {
+		if avatar := retrieveFromRemoteUrl(remoteUrl, request, d_404); avatar != nil {
+			return avatar
+		}
+	}
+	return retrieveFromRemoteUrl(remoteUrls[l-1], request, request.dflt)
 }
 
 func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
