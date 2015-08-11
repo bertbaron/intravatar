@@ -23,10 +23,10 @@ var (
 	port    = flag.Int("port", 8080, "Webserver port number.")
 	logfile = flag.String("logfile", "", "Path to log file, if empty, the log will go to stderr of the process")
 
-	remote = flag.String("remote", "https://gravatar.com/avatar", "Use this gravatar-compatible avatar service if "+
-		"no avatar is found.")
-	dflt = flag.String("default", "remote:monsterid", "Default avatar. Use 'remote' to use the default of the remote\n"+
-		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passes as\n"+
+	remote = flag.String("remote", "https://gravatar.com/avatar", "Comma-separated list of gravatar-compatible avatar\n"+
+		"    services to use if no avatar is found.")
+	dflt = flag.String("default", "remote:monsterid", "Default avatar. Use 'remote' to use the default of the (last) remote\n"+
+		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passed as\n"+
 		"    '?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.\n"+
 		"    If no remote and no local default is configured, resources/mm is used as default.")
 

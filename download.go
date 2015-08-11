@@ -52,13 +52,9 @@ func retrieveFromLocal(request Request) *Avatar {
 // dflt is used instead of request.dflt
 func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avatar {
 	options := fmt.Sprintf("s=%d", request.size)
-//	dflt := remoteDefault
-//	if request.dflt != "" {
-//		dflt = request.dflt
-//	}
-//	if dflt != "" {
-//		options += "&d=" + dflt
-//	}
+	if dflt != "" {
+		options += "&d=" + dflt
+	}
 	remote := remoteUrl + "/" + request.hash + "?" + options
 	log.Printf("Retrieving from: %s", remote)
 	resp, err2 := http.Get(remote)
@@ -67,7 +63,7 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 		return nil
 	}
 	if resp.StatusCode == 404 {
-		log.Printf("Avatar not found on remote")
+		log.Printf("Avatar not found on remote %s", remoteUrl)
 		return nil
 	}
 	avatar := readImage(resp.Body)
@@ -88,7 +84,11 @@ func retrieveFromRemote(request Request) *Avatar {
 			return avatar
 		}
 	}
-	return retrieveFromRemoteUrl(remoteUrls[l-1], request, request.dflt)
+	dflt := remoteDefault
+	if request.dflt != "" {
+		dflt = request.dflt
+	}
+	return retrieveFromRemoteUrl(remoteUrls[l-1], request, dflt)
 }
 
 func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
