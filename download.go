@@ -69,8 +69,15 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 	}
 	avatar := readImage(resp.Body)
 	avatar.size = request.size // assume image is scaled by remote service
-	avatar.cacheControl = resp.Header.Get("Cache-Control")
 	avatar.lastModified = resp.Header.Get("Last-Modified")
+	
+	// We don't use the cache control from the remote, it may be set to a very long time if the image can not change
+	// from request to request (like with unicornify).
+	// NOTE: This violates the cache contract because the image may be requested again from the remote
+	// server before the cache expires. To solve this properly we would need to cache the responses ourselves.  
+	//	avatar.cacheControl = resp.Header.Get("Cache-Control")
+	avatar.cacheControl = "max-age=300"
+	
 	return avatar
 }
 
@@ -141,10 +148,10 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, hash string) {
 	size := 80
 	if sizeParam != "" {
 		if s, err := strconv.Atoi(sizeParam); err == nil {
-			size = max(min(s, maxSize), minSize) 
+			size = max(min(s, maxSize), minSize)
 		}
 	}
 	dflt := validDefault(r.FormValue("d"))
-	
+
 	loadImage(Request{hash: hash, size: size, dflt: dflt}, w, r)
 }
