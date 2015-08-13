@@ -62,6 +62,7 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 		log.Printf("Remote lookup of %s failed with error: %s", remote, err2)
 		return nil
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == 404 {
 		log.Printf("Avatar not found on remote %s", remoteUrl)
 		return nil
