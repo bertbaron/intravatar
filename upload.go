@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strings"
 	"time"
@@ -29,8 +30,44 @@ func validateAndResize(file io.Reader) (*Avatar, error) {
 	return avatar, nil
 }
 
-func sendConfirmationEmail(email string, token string) error {
+func sendMessage(msg *gomail.Message) error {
+	config := tls.Config{}
+	if *noTls {
+		config.InsecureSkipVerify = true
+	}
+	var auth smtp.Auth
+	if *smtpUser != "" {
+		auth = gomail.LoginAuth(*smtpUser, *smtpPassword, *smtpHost)
+		config.ServerName = *smtpHost
+	}
 	address := fmt.Sprintf("%v:%v", *smtpHost, *smtpPort)
+	mailer := gomail.NewCustomMailer(address, auth, gomail.SetTLSConfig(&config))
+	if err := mailer.Send(msg); err != nil {
+		log.Printf("Error sending configuration email: %v", err)
+		return errors.New("Failed to send confirmation email")
+	}
+	return nil
+}
+
+// Sends a test email so that it can be verified that email is working correctly.
+func sendTestMail(email string) error {
+    // There is still too much duplicate code 
+	log.Printf("Sending test email to %s to verify that email is configured correctly", email)
+	
+	from := *sender
+	to := email
+	title := "Intravatar is up and running"
+	body := "If you receive this message, intravatar is up and running and able to send confirmation emails"
+
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", from)
+	msg.SetHeader("To", to)
+	msg.SetHeader("Subject", title)
+	msg.SetBody("text/plain", body)
+	return sendMessage(msg)
+}
+
+func sendConfirmationEmail(email string, token string) error {
 	log.Printf("Sending confiration email to %v with confirmation token %v", email, token)
 	from := *sender
 	to := email
@@ -40,19 +77,13 @@ func sendConfirmationEmail(email string, token string) error {
 	link := fmt.Sprintf("<a href=\"%s\">%s</a>", url, url)
 	body := "Thank you for uploading your avatar. You can confirm your upload by clicking this link: " + link
 
-	// Option 3: using Gomail
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", from)
 	msg.SetHeader("To", to)
 	msg.SetHeader("Subject", title)
 	msg.SetBody("text/html", body)
-
-	config := tls.Config{}
-	if *noTls {
-		config.InsecureSkipVerify = true
-	}
-	mailer := gomail.NewCustomMailer(address, nil, gomail.SetTLSConfig(&config))
-	if err := mailer.Send(msg); err != nil {
+	
+	if err := sendMessage(msg); err != nil {
 		log.Printf("Error sending configuration email: %v", err)
 		return errors.New("Failed to send confirmation email")
 	}

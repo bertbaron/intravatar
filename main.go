@@ -30,10 +30,13 @@ var (
 		"    '?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.\n"+
 		"    If no remote and no local default is configured, resources/mm is used as default.")
 
-	smtpHost = flag.String("smtp-host", "", "SMTP host used for email confirmation")
-	smtpPort = flag.Int("smtp-port", 25, "SMTP port")
-	sender   = flag.String("sender", "", "Senders email address")
-	noTls    = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
+	smtpHost     = flag.String("smtp-host", "", "SMTP host used for email confirmation, if not configured no confirmation emails will be required")
+	smtpPort     = flag.Int("smtp-port", 25, "SMTP port")
+	smtpUser     = flag.String("smtp-user", "", "SMTP user")
+	smtpPassword = flag.String("smtp-password", "", "SMTP password")
+	sender       = flag.String("sender", "", "Senders email address")
+	noTls        = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
+	testMailAddr = flag.String("test-mail-addr", "", "If specified, sends a test email on startup to the given email address") 
 )
 
 var (
@@ -190,6 +193,12 @@ func main() {
 		defaultImage = *dflt
 		remoteDefault = "404"
 		log.Printf("Using %s as default image", defaultImage)
+	}
+
+	if *testMailAddr != "" {
+		if err := sendTestMail(*testMailAddr); err != nil {
+			log.Fatalf("Failed to send test email to %s: %v", *testMailAddr, err) 
+		}
 	}
 
 	log.Printf("Listening on %s\n", address)
