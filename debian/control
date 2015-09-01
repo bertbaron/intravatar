@@ -1,0 +1,8 @@
+Package: intravatar
+Priority: extra
+Maintainer: Bert Baron <bertusbaron@gmail.com>
+Section: devel
+Version: snapshot
+Architecture: amd64
+Description: Simple avatar service for intranet usage
+
