@@ -18,7 +18,7 @@ the following from the command prompt to install and run:
 
 ```bash
 go get -u -a github.com/bertbaron/intravatar
-cd $GOCODE/src/github.com/bertbaron/intravatar
+cd $GOPATH/src/github.com/bertbaron/intravatar
 go build
 ./intravatar
 ```
