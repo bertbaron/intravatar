@@ -1,14 +1,16 @@
 language: go
 
 go:
-- 1.6.x
-
-script: go build
+- 1.8.x
 
 deploy:
   provider: releases
   api_key:
     secure: Xu++7dJsfzm5H41HH9qi1tIdST7YtoBGwrS1QJfgYB04T2hE59WuXHoHTeeykfD98R4mQC3ARrBoHnxEL5KKVgO5SolYvK/4VCbA1x3L/I1Hm4QbGd3V1YWou+gWx4Izx/v5PI9EUtHPODauYH27ywvxEiHXwUL5BNOjZuD23bZkxt1MUjgIAA2pNGtVrd9hZjO2LsM2RtFxhZ5YbTf0zbzxgSVSaBT0NRMTEBFkUT5aDuUDywchOI87DE0izFNUjvLmPI2e2tUyOE4xtjIRQBj86XWbeiQYuQ1GO7xgoPXWisW7nLnTIV0dunjnoBZ4DeinPxLAPfOl6lQI7beFonD9DJeHuqyiMXcujBlX4pIhm3Ex51vJ+U+yOPHGF1CN9Z+o1nj7nOw7ofVVH/pVHMRpQecDiK8q6WADRNjPzqh8hRxy338ePZYAvno8QppapAa+FwAOn7u9wTj9miOPmQp/+O7oIVgvxOfsys6eUWaTKY+BVsJq6dIWCbMliLnqFjV2+0IH6D+8XMK7LfHK33QrJdrWLwHLB+/DH3EUvZUL0dvFk+4aBJvAZbilauRWYafO/FJ7lPFXzKG3AllPNSVKSceVAJqn2Q+u0b48T4xwoFieUCaYQDtDq0Qz9oFNO2s+0z2I8tX4zvmirF/C4LZXOPiuQY/XQEqqt/ixzXk=
-  file: intravatar
+  file:
+    - intravatar-linux-amd64.tar.gz
+    - intravatar-linux-arm.tar.gz
+    - intravatar-darwin-amd64.tar.gz
+    - intravatar-windows-amd64.zip
   on:
     tags: true
