@@ -3,3 +3,6 @@ intravatar
 .idea
 *.iml
 /local/
+*.exe
+*.gz
+*.zip
