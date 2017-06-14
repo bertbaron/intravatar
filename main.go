@@ -20,8 +20,8 @@ import (
 // Options
 var (
 	dataDir = flag.String("data", "data", "Path to data files relative to current working dir.")
-	host    = flag.String("host", "", "The dns name of this host. Defaults to the systems hostname")
 	port    = flag.Int("port", 8080, "Webserver port number.")
+	webroot = flag.String("webroot", "", "The webroot of the service, defaults to http://localhost:<port>")
 	logfile = flag.String("logfile", "", "Path to log file, if empty, the log will go to stderr of the process")
 
 	remote = flag.String("remote", "https://gravatar.com/avatar", "Comma-separated list of gravatar-compatible avatar\n"+
@@ -108,29 +108,21 @@ func createHash(email string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func getHostName() string {
-	hostname := *host
-	if hostname == "" {
-		var err error
-		hostname, err = os.Hostname()
-		if err != nil {
-			hostname = "localhost"
-		}
-	}
-	return hostname
-}
-
 func getServiceUrl() string {
-	portName := ""
-	if *port != 80 {
-		portName = fmt.Sprintf(":%d", *port)
+	url := *webroot
+	if url == "" {
+		portName := ""
+		if *port != 80 {
+			portName = fmt.Sprintf(":%d", *port)
+		}
+		url = "http://localhost" + portName
 	}
-	return "http://" + getHostName() + portName + "/"
+	return url + "/"
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request, title string) {
 	url := getServiceUrl() + "avatar/"
-	renderTemplate(w, "index", map[string]string{"AvatarLink": url, "HostName": getHostName()})
+	renderTemplate(w, "index", map[string]string{"AvatarLink": url})
 }
 
 // Creates a http request handler
@@ -229,6 +221,7 @@ func main() {
 	createDirectoryStructure()
 
 	log.Printf("Listening on %s\n", address)
+	log.Printf("Service url: %s\n", getServiceUrl())
 	http.HandleFunc("/", makeHandler(homeHandler, "^/()$"))
 
 	// Mandatory root-based resources
