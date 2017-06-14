@@ -155,6 +155,16 @@ func confirmHandler(w http.ResponseWriter, r *http.Request, token string) {
 	confirm(w, r, token)
 }
 
+func writeToFile(filename string, avatar *Avatar) error {
+	f, err := os.Create(filename)
+	if err != nil {	return err }
+	defer f.Close()
+
+	b := bytes.NewBuffer(avatar.data)
+	_, err = io.Copy(f, b)
+	return err
+}
+
 func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 	email := r.FormValue("email")
 	log.Printf("Saving image for email address: %v", email)
@@ -177,16 +187,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 	hash := createHash(email)
 	filename := createUnconfirmedAvatarPath(hash, token)
 
-	f, err := os.Create(filename)
+	err = writeToFile(filename, avatar)
 	if err != nil {
 		renderSaveError(w, "Error while creating file", err)
-		return
-	}
-	defer f.Close()
-	b := bytes.NewBuffer(avatar.data)
-	_, err = io.Copy(f, b)
-	if err != nil {
-		renderSaveError(w, "Failed to write file", err)
 		return
 	}
 
