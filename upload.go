@@ -105,7 +105,7 @@ func renderSaveError(w http.ResponseWriter, message string, err error) {
 	renderTemplate(w, "saveError", map[string]string{"Message": message, "Error": errMsg})
 }
 
-func getConfirmationFile(token string) (filepath string, hash string, err error) {
+func getConfirmationFile(token string) (_ string, hash string, err error) {
 	files, err := ioutil.ReadDir(getUnconfirmedDir())
 	if err != nil {
 		log.Fatal(err)
