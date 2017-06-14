@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"path/filepath"
 )
 
 // Options
@@ -52,12 +53,37 @@ const (
 	configFile = "config.ini"
 )
 
+
+// exists returns whether the given file or directory exists or not
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil { return true }
+	if os.IsNotExist(err) { return false }
+	log.Fatalf("Error looking up directory %s", path)
+	return false
+}
+
+func mkdir(path string) {
+	if !exists(path) {
+		log.Printf("Creating directory %s", path)
+		os.Mkdir(path, 0700)
+	}
+}
+
+func createDirectoryStructure() {
+	mkdir(*dataDir)
+	mkdir(filepath.Join(*dataDir, "avatars"))
+	mkdir(filepath.Join(*dataDir, "unconfirmed"))
+}
+
 func createAvatarPath(hash string) string {
-	return fmt.Sprintf("%s/avatars/%s", *dataDir, hash)
+	//return fmt.Sprintf("%s/avatars/%s", *dataDir, hash)
+	return filepath.Join(*dataDir, "avatars", hash)
 }
 
 func createUnconfirmedAvatarPath(hash string, token string) string {
-	return fmt.Sprintf("%s/unconfirmed/%s-%s", *dataDir, token, hash)
+	//return fmt.Sprintf("%s/unconfirmed/%s-%s", *dataDir, token, hash)
+	return filepath.Join(*dataDir, "unconfirmed", fmt.Sprintf("%s-%s", token, hash))
 }
 
 func getUnconfirmedDir() string {
@@ -200,6 +226,8 @@ func main() {
 			log.Fatalf("Failed to send test email to %s: %v", *testMailAddr, err) 
 		}
 	}
+
+	createDirectoryStructure()
 
 	log.Printf("Listening on %s\n", address)
 	http.HandleFunc("/", makeHandler(homeHandler, "^/()$"))
