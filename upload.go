@@ -163,15 +163,15 @@ func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 		renderSaveError(w, "Please chooce a file to upload", err)
 		return
 	}
-	avatar, err2 := validateAndResize(file)
-	if err2 != nil {
-		renderSaveError(w, "Failed to read image file. Note that only jpeg, png and gif images are supported", err2)
+	avatar, err := validateAndResize(file)
+	if err != nil {
+		renderSaveError(w, "Failed to read image file. Note that only jpeg, png and gif images are supported", err)
 		return
 	}
 
-	token, err3 := createToken()
-	if err3 != nil {
-		renderSaveError(w, "Failed to generate random token", err3)
+	token, err := createToken()
+	if err != nil {
+		renderSaveError(w, "Failed to generate random token", err)
 		return
 	}
 	hash := createHash(email)
