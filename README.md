@@ -11,7 +11,7 @@ Intravatar's goal is to be as simple as possible to setup. Avatars can be upload
  administrator. Besides that Intravatar can be configured to use a remote service to fallback on when an image is not
  found in the local database.
 
-## Installation and (without docker)
+## Installation (without docker)
 
 Download the latest release: [![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg)](https://github.com/bertbaron/intravatar/releases/latest)
 
