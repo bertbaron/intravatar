@@ -15,7 +15,7 @@ Intravatar's goal is to be as simple as possible to setup. Avatars can be upload
 
 Download the latest release:
 
-[![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg](https://github.com/bertbaron/intravatar/releases/latest)
+[![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg)](https://github.com/bertbaron/intravatar/releases/latest)
 
 [![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg)](https://clojars.org/bertbaron/paad)
 
