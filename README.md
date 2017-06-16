@@ -15,7 +15,9 @@ Intravatar's goal is to be as simple as possible to setup. Avatars can be upload
 
 Download the latest release:
 
-[![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg](https://github.com/bertbaron/intravatar/releases/latest)]
+[![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg](https://github.com/bertbaron/intravatar/releases/latest)
+
+[![Clojars Project](https://img.shields.io/clojars/v/bertbaron/paad.svg)](https://clojars.org/bertbaron/paad)
 
 Unpack and run the `intravatar` or `intravatar.exe` executable in the intravatar directory.
 Adjust `config.ini` where necessary (changes will have effect after a restart).
