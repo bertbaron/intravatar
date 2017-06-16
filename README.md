@@ -11,9 +11,13 @@ Intravatar's goal is to be as simple as possible to setup. Avatars can be upload
  administrator. Besides that Intravatar can be configured to use a remote service to fallback on when an image is not
  found in the local database.
 
-Binaries for different platforms for use without docker are available on: <https://github.com/bertbaron/intravatar/releases>
+## Installation and (without docker)
 
-## How to use this image
+Download the latest release: [![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg](https://github.com/bertbaron/intravatar/releases/latest)
+Unpack and run the `intravatar` or `intravatar.exe` executable in the intravatar directory.
+Adjust `config.ini` where necessary (changes will have effect after a restart).
+
+## How to use the docker image
 
 ### Run with minimal configuration
 ```
