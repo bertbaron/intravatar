@@ -38,10 +38,8 @@ Note that the current working directory in the container is `/intravatar`.
 ### Relevant mount points
 
  * `intravatar/data` - data directory, should be mounted to make the data persistent
- * `intravatar/config.ini` - configuration file, can be mounted to avoid the need for command line options (although
-    those would still take precedence)
+ * `intravatar/config.ini` - configuration file, can be mounted to avoid the need for command line options (although those would still take precedence)
  * `intravatar/resources/templates` - html template files, can be customized
- * `intravatar/resources/static` - static files that can be used by the html templates. By default contains
-    robots.txt and stylesheet.css. 
+ * `intravatar/resources/static` - static files that can be used by the html templates. By default contains robots.txt and stylesheet.css. 
 
 Please refer to <https://github.com/bertbaron/intravatar> for the default files (or download and unpack a released version from <https://github.com/bertbaron/intravatar/releases>) 
