@@ -6,12 +6,16 @@
 <body>
 <h1>Thank you for uploading your avatar</h1>
 
-<img src="{{.Avatar}}?s=16&uniq={{.Uniq}}"/>
-<img src="{{.Avatar}}?s=32&uniq={{.Uniq}}"/>
-<img src="{{.Avatar}}?s=64&uniq={{.Uniq}}"/>
-<img src="{{.Avatar}}?s=128&uniq={{.Uniq}}"/>
-<img src="{{.Avatar}}?s=256&uniq={{.Uniq}}"/>
-<img src="{{.Avatar}}?s=512&uniq={{.Uniq}}"/>
+<div style="position:relative; border: 3px solid #00427a; width:680; height:420; margin-top:5; margin-bottom:5">
+    <img style="position:absolute; top:300px; left:160px" src="{{.Avatar}}?s=20&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:300px; left:180px" src="{{.Avatar}}?s=20&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:260px; left:160px" src="{{.Avatar}}?s=40&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:260px; left:200px" src="{{.Avatar}}?s=60&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:320px; left:160px" src="{{.Avatar}}?s=100&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:260px; left:  0px" src="{{.Avatar}}?s=160&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:  0px; left:  0px" src="{{.Avatar}}?s=260&uniq={{.Uniq}}"/>
+    <img style="position:absolute; top:  0px; left:260px" src="{{.Avatar}}?s=420&uniq={{.Uniq}}"/>
+</div>
 
 <p>Note that it may take a few minutes before your new avatar will be shown on other sites.</p>
 </body>
