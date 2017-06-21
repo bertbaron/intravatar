@@ -38,7 +38,7 @@ func avatar2Image(avatar *Avatar) (img image.Image, format string, err error) {
 	return image.Decode(bytes.NewBuffer(avatar.data))
 }
 
-// alterings the avatar instance!
+// alters the avatar instance!
 func image2Avatar(avatar *Avatar, img image.Image, format string) {
 	b := new(bytes.Buffer)
 	switch format {
@@ -86,12 +86,11 @@ func cropAndScale(avatar *Avatar) error {
 			return err
 		}
 	}
-	if size <= maxSize {
-		return nil
+	if size > maxSize {
+		log.Printf("Resizing img from %vx%v to %vx%v", size, size, maxSize, maxSize)
+		img = resize.Resize(uint(maxSize), uint(maxSize), img, resize.Bicubic)
 	}
-	log.Printf("Resizing img from %vx%v to %vx%v", size, size, maxSize, maxSize)
-	resized := resize.Resize(uint(maxSize), uint(maxSize), img, resize.Bicubic)
-	image2Avatar(avatar, resized, format)
+	image2Avatar(avatar, img, format)
 	return nil
 }
 
