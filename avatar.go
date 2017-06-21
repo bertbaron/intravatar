@@ -59,9 +59,6 @@ func scale(avatar *Avatar, size int) error {
 		return err
 	}
 	actualSize := img.Bounds().Dx() // assume square
-	if size == actualSize {
-		return nil
-	}
 	log.Printf("Resizing img from %vx%v to %vx%v", actualSize, actualSize, size, size)
 	resized := resize.Resize(uint(size), uint(size), img, resize.Bicubic)
 	image2Avatar(avatar, resized, format)
