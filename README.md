@@ -24,7 +24,7 @@ Adjust `config.ini` where necessary (changes will have effect after a restart).
 
 ### Run with minimal configuration
 ```
-  docker run -p 8080:8080 -v /var/lib/intravatar:/intravatar/data bertbaron/intravatar -host $(hostname)
+  docker run -p 8080:8080 -v /var/lib/intravatar:/intravatar/data bertbaron/intravatar -h $(hostname)
 ```
 
  * This will provide the service at <http://localhost:8080>.
