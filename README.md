@@ -1,5 +1,8 @@
 # Simple avatar service meant for intranet usage
 
+[![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg?style=flat)](https://github.com/bertbaron/intravatar/releases/latest)
+[![Travis](https://travis-ci.org/bertbaron/intravatar.svg?branch=master)](https://travis-ci.org/bertbaron/intravatar)
+
 There are public services, like [Gravatar](http://www.gravatar.com), where one can register an Avatar, which can then be displayed on for example forums. There is also a growing number of tools that are used inside companies that can use such a global avatar service. However, not all people may want to register at a global service or company policy may not allow it.
 
 The solution is to setup an avatar service on the intranet, for example using [libravatar](https://www.libravatar.org/). While this is not too difficult to setup, it still requires some effort.
