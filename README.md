@@ -42,4 +42,8 @@ Note that the current working directory in the container is `/intravatar`.
  * `intravatar/resources/templates` - html template files, can be customized
  * `intravatar/resources/static` - static files that can be used by the html templates. By default contains robots.txt and stylesheet.css. 
 
-Please refer to <https://github.com/bertbaron/intravatar> for the default files (or download and unpack a released version from <https://github.com/bertbaron/intravatar/releases>) 
+Refer to <https://github.com/bertbaron/intravatar> for the default files (or download and unpack a released version from <https://github.com/bertbaron/intravatar/releases>)
+
+# Feedback
+
+Please let me know via github or docker hub if you find an issue or would like to suggest a feature to be added.
