@@ -1,5 +1,8 @@
 # Simple avatar service meant for intranet usage
 
+
+[![](https://images.microbadger.com/badges/version/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar "Get your own version badge on microbadger.com")
+[![](https://images.microbadger.com/badges/image/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar "Get your own image badge on microbadger.com")
 [![release](http://github-release-version.herokuapp.com/github/bertbaron/intravatar/release.svg?style=flat)](https://github.com/bertbaron/intravatar/releases/latest)
 [![Travis](https://travis-ci.org/bertbaron/intravatar.svg?branch=master)](https://travis-ci.org/bertbaron/intravatar)
 
