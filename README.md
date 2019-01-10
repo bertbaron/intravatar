@@ -1,9 +1,9 @@
 # Simple avatar service meant for intranet usage
 
-[![](https://images.microbadger.com/badges/version/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
-[![](https://images.microbadger.com/badges/image/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
+[![](https://img.shields.io/microbadger/image-size/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
+[![](https://img.shields.io/microbadger/layers/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
 [![](https://img.shields.io/github/release/bertbaron/intravatar.svg)](https://github.com/bertbaron/intravatar/releases/latest)
-[![](https://travis-ci.org/bertbaron/intravatar.svg?branch=master)](https://travis-ci.org/bertbaron/intravatar)
+[![](https://img.shields.io/travis/bertbaron/intravatar.svg?branch=master)](https://github.com/bertbaron/intravatar/releases/latest)
 
 There are public services, like [Gravatar](http://www.gravatar.com), where one can register an Avatar, which can then be displayed on for example forums. There is also a growing number of tools that are used inside companies that can use such a global avatar service. However, not all people may want to register at a global service or company policy may not allow it.
 
