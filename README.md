@@ -1,22 +1,21 @@
 # Simple avatar service meant for intranet usage
 
-
-[![](https://images.microbadger.com/badges/version/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar "Get your own version badge on microbadger.com")
-[![](https://images.microbadger.com/badges/image/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar "Get your own image badge on microbadger.com")
-[![release](https://img.shields.io/github/release/bertbaron/intravatar.svg)](https://github.com/bertbaron/intravatar/releases/latest)
-[![Travis](https://travis-ci.org/bertbaron/intravatar.svg?branch=master)](https://travis-ci.org/bertbaron/intravatar)
+[![](https://images.microbadger.com/badges/version/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
+[![](https://images.microbadger.com/badges/image/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
+[![](https://img.shields.io/github/release/bertbaron/intravatar.svg)](https://github.com/bertbaron/intravatar/releases/latest)
+[![](https://travis-ci.org/bertbaron/intravatar.svg?branch=master)](https://travis-ci.org/bertbaron/intravatar)
 
 There are public services, like [Gravatar](http://www.gravatar.com), where one can register an Avatar, which can then be displayed on for example forums. There is also a growing number of tools that are used inside companies that can use such a global avatar service. However, not all people may want to register at a global service or company policy may not allow it.
 
 The solution is to setup an avatar service on the intranet, for example using [libravatar](https://www.libravatar.org/). While this is not too difficult to setup, it still requires some effort.
 
-Intravatar's goal is to be as simple as possible to setup. Avatars can be uploaded by users and/or maintained by an administrator. Besides that Intravatar can be configured to use a remote service to fallback on when an image is not found in the local database.
+Intravatar's goal is to be as simple as possible to setup. Avatars can be uploaded by users and/or maintained by an administrator. Besides that Intravatar can be configured to use a remote service as fallback for missing images.
 
 ## Installation (without docker)
 
 Download the latest release
 
-[![release](https://img.shields.io/github/release/bertbaron/intravatar.svg)](https://github.com/bertbaron/intravatar/releases/latest)
+[![](https://img.shields.io/github/release/bertbaron/intravatar.svg)](https://github.com/bertbaron/intravatar/releases/latest)
 
 Unpack and run the `intravatar` or `intravatar.exe` executable in the intravatar directory.
 Adjust `config.ini` where necessary (changes will have effect after a restart).
