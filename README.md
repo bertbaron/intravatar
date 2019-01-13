@@ -3,7 +3,7 @@
 [![](https://img.shields.io/microbadger/image-size/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
 [![](https://img.shields.io/microbadger/layers/bertbaron/intravatar.svg)](http://microbadger.com/images/bertbaron/intravatar)
 [![](https://img.shields.io/github/release/bertbaron/intravatar.svg)](https://github.com/bertbaron/intravatar/releases/latest)
-[![](https://img.shields.io/travis/bertbaron/intravatar.svg?branch=master)](https://github.com/bertbaron/intravatar/releases/latest)
+[![](https://img.shields.io/travis/bertbaron/intravatar.svg?branch=master)](https://travis-ci.org/bertbaron/intravatar)
 
 There are public services, like [Gravatar](http://www.gravatar.com), where one can register an Avatar, which can then be displayed on for example forums. There is also a growing number of tools that are used inside companies that can use such a global avatar service. However, not all people may want to register at a global service or company policy may not allow it.
 
@@ -45,10 +45,10 @@ Note that the current working directory in the container is `/intravatar`.
  * `intravatar/data` - data directory, should be mounted to make the data persistent
  * `intravatar/config.ini` - configuration file, can be mounted to avoid the need for command line options (although those would still take precedence)
  * `intravatar/resources/templates` - html template files, can be customized
- * `intravatar/resources/static` - static files that can be used by the html templates. By default contains robots.txt and stylesheet.css. 
+ * `intravatar/resources/static` - static files that can be used by the html templates. By default contains robots.txt and stylesheet.css.
 
 Refer to <https://github.com/bertbaron/intravatar> for the default files (or download and unpack a released version from <https://github.com/bertbaron/intravatar/releases>)
 
-# Feedback
+## Feedback
 
 Please let me know via github or docker hub if you find an issue or would like to suggest a feature to be added.
