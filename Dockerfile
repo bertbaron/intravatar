@@ -3,7 +3,7 @@
 # Note that the project is build on the container itself,
 # and that the build is not using the make file.
 
-FROM golang:1.9-alpine
+FROM golang:1.11-alpine
 
 # build
 WORKDIR /go/src/intravatar
