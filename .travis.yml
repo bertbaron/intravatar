@@ -15,5 +15,6 @@ deploy:
     - intravatar-linux-arm.tar.gz
     - intravatar-darwin-amd64.tar.gz
     - intravatar-windows-amd64.zip
+  skip_cleanup: true
   on:
     tags: true
