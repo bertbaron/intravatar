@@ -9,7 +9,7 @@ There are public services, like [Gravatar](http://www.gravatar.com), where one c
 
 The solution is to setup an avatar service on the intranet, for example using [libravatar](https://www.libravatar.org/). While this is not too difficult to setup, it still requires some effort.
 
-Intravatar's goal is to be as simple as possible to setup. Avatars can be uploaded by users and/or maintained by an administrator. Besides that Intravatar can be configured to use a remote service as fallback for missing images.
+Intravatar's goal is to be as simple as possible to setup. Avatars can be uploaded by users and/or maintained by an administrator. Besides, Intravatar can be configured as a proxy, using a remote service as fallback for missing images.
 
 ## Installation (without docker)
 
