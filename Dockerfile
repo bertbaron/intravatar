@@ -1,24 +1,26 @@
 # Docker image with intravatar as entrypoint
 #
-# Note that the project is build on the container itself,
-# and that the build is not using the make file.
+# This is a multi-stage dockerfile. The app is
+# build in the first stage
+# and then copied onto a fresh alpine image
+#
+# Note that the make file is not used
 
-FROM golang:1.11-alpine
+# Builder image
+FROM golang:1.11-alpine as builder
 
-# build
-WORKDIR /go/src/intravatar
+WORKDIR /go/src/github.com/bertbaron/intravatar
 COPY *.go ./
+RUN apk add --no-cache git
+RUN go get -v -d
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o intravatar .
 
-RUN apk add --no-cache git \
-    && go get -v -d \
-    && go install -v \
-    && rm -rf /go/src /go/pkg \
-    && apk del --purge --no-cache git
-
-# run
-RUN mkdir /intravatar
+# Target image
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
 WORKDIR /intravatar
+COPY --from=builder /go/src/github.com/bertbaron/intravatar/intravatar .
 COPY resources resources
 COPY config.ini .
 
-ENTRYPOINT ["intravatar"]
+ENTRYPOINT ["./intravatar"]
