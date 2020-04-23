@@ -1,7 +1,13 @@
 all: clean linux darwin arm windows
 
+ifneq (,$(shell which gtar 2>/dev/null))
+TAR ?= gtar
+else
+TAR ?= tar
+endif
+
 RESOURCES=resources config.ini LICENSE
-TARCMD=tar --transform 's|^|intravatar/|' -czf
+TARCMD=${TAR} --transform 's|^|intravatar/|' -czf
 
 init:
 	go get ./...
