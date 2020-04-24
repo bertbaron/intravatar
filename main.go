@@ -26,6 +26,8 @@ var (
 
 	remote = flag.String("remote", "https://gravatar.com/avatar", "Comma-separated list of gravatar-compatible avatar\n"+
 		"    services to use if no avatar is found.")
+	emailDomain = flag.String("emailDomain", "", "Comma-separated list of email domains\n"+
+		"    allowed to change avatars. Empty value mean all domains are allowed.")
 	dflt = flag.String("default", "remote:monsterid", "Default avatar. Use 'remote' to use the default of the (last) remote\n"+
 		"    service, or 'remote:<option>' to use a builtin default. For example: 'remote:monsterid'. This is passed as\n"+
 		"    '?d=monsterid' to the remote service. See https://nl.gravatar.com/site/implement/images/.\n"+
@@ -37,12 +39,13 @@ var (
 	smtpPassword = flag.String("smtp-password", "", "SMTP password")
 	sender       = flag.String("sender", "", "Senders email address")
 	noTls        = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
-	testMailAddr = flag.String("test-mail-addr", "", "If specified, sends a test email on startup to the given email address") 
+	testMailAddr = flag.String("test-mail-addr", "", "If specified, sends a test email on startup to the given email address")
 )
 
 var (
 	defaultImage  = "resources/mm"
 	remoteUrls    = []string{}
+	emailDomains  = []string{}
 	remoteDefault = ""
 	templates     *template.Template
 )
@@ -197,6 +200,15 @@ func main() {
 		remoteUrls = strings.Split(*remote, ",")
 		log.Printf("Missing avatars will be redirected to %s", remoteUrls)
 	}
+	if *emailDomain == "" {
+		emailDomains = []string{}
+	} else {
+		emailDomains = strings.Split(*emailDomain, ",")
+		for idx, domain := range emailDomains {
+			emailDomains[idx] = strings.ToLower(domain)
+	}
+		log.Printf("Avatars will only be stored for email domains %s", emailDomains)
+	}
 
 	remoteFallbackPattern := regexp.MustCompile("^remote:([a-zA-Z]+)$")
 
@@ -214,7 +226,7 @@ func main() {
 
 	if *testMailAddr != "" {
 		if err := sendTestMail(*testMailAddr); err != nil {
-			log.Fatalf("Failed to send test email to %s: %v", *testMailAddr, err) 
+			log.Fatalf("Failed to send test email to %s: %v", *testMailAddr, err)
 		}
 	}
 
