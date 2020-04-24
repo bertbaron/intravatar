@@ -44,6 +44,7 @@ var (
 
 var (
 	defaultImage  = "resources/mm"
+	defaultFormat = "jpeg"
 	remoteUrls    = []string{}
 	emailDomains  = []string{}
 	remoteDefault = ""

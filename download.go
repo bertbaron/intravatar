@@ -8,19 +8,22 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"regexp"
 )
 
 type Request struct {
 	hash string
 	size int
 	dflt string
+	format string
 }
 
 const (
 	d_404 = "404"
 )
+var extensionRegExp = regexp.MustCompile("\\.([0-9a-zA-Z]+)$")
 
-func readFromFile(filename string, size int) *Avatar {
+func readFromFile(filename string, request Request) *Avatar {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Printf("Error reading file: %v", err)
@@ -28,7 +31,7 @@ func readFromFile(filename string, size int) *Avatar {
 	}
 	defer file.Close()
 	avatar := readImage(file)
-	err = scale(avatar, size)
+	err = scale(avatar, request.size, request.format)
 	if err != nil {
 		log.Printf("Could not scale image: %v", err)
 		return nil // don't return the image, if we can't scale it it is probably corrupt
@@ -45,7 +48,7 @@ func readFromFile(filename string, size int) *Avatar {
 }
 
 func retrieveFromLocal(request Request) *Avatar {
-	return readFromFile(createAvatarPath(request.hash), request.size)
+	return readFromFile(createAvatarPath(request.hash), request)
 }
 
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
@@ -55,7 +58,11 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 	if dflt != "" {
 		options += "&d=" + dflt
 	}
-	remote := remoteUrl + "/" + request.hash + "?" + options
+	formatPart := ""
+	if request.format != "" {
+		formatPart = "." + request.format
+	}
+	remote := remoteUrl + "/" + request.hash + formatPart + "?" + options
 	log.Printf("Retrieving from: %s", remote)
 	resp, err2 := http.Get(remote)
 	if err2 != nil {
@@ -70,14 +77,14 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 	avatar := readImage(resp.Body)
 	avatar.size = request.size // assume image is scaled by remote service
 	avatar.lastModified = resp.Header.Get("Last-Modified")
-	
+
 	// We don't use the cache control from the remote, it may be set to a very long time if the image can not change
 	// from request to request (like with unicornify).
 	// NOTE: This violates the cache contract because the image may be requested again from the remote
-	// server before the cache expires. To solve this properly we would need to cache the responses ourselves.  
+	// server before the cache expires. To solve this properly we would need to cache the responses ourselves.
 	//	avatar.cacheControl = resp.Header.Get("Cache-Control")
 	avatar.cacheControl = "max-age=300"
-	
+
 	return avatar
 }
 
@@ -115,10 +122,10 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 		avatar = retrieveFromRemote(request)
 	}
 	if avatar == nil && request.dflt != d_404 {
-		avatar = readFromFile(defaultImage, request.size)
+		avatar = readFromFile(defaultImage, request)
 	}
 	if avatar == nil && request.dflt != d_404 {
-		avatar = readFromFile("resources/mm", request.size)
+		avatar = readFromFile("resources/mm", request)
 	}
 	return avatar
 }
@@ -153,5 +160,21 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, hash string) {
 	}
 	dflt := validDefault(r.FormValue("d"))
 
-	loadImage(Request{hash: hash, size: size, dflt: dflt}, w, r)
+
+	format := ""
+	m := extensionRegExp.FindStringSubmatch(r.URL.Path)
+	if m != nil {
+		format = normalizeFormat(m[1])
+	}
+
+	loadImage(Request{hash: hash, size: size, dflt: dflt, format:format}, w, r)
+}
+
+func normalizeFormat(inputName string) string {
+	var normalizedFormat string
+	switch inputName {
+		case "jpg": normalizedFormat = "jpeg"
+		default: normalizedFormat = inputName
+	}
+	return normalizedFormat
 }
