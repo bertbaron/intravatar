@@ -243,7 +243,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("resources/static/"))))
 
 	// Application
-	http.HandleFunc("/avatar/", makeHandler(avatarHandler, "^/avatar/([a-zA-Z0-9]+)$"))
+	http.HandleFunc("/avatar/", makeHandler(avatarHandler, "^/avatar/([a-zA-Z0-9]+)(\\.[a-zA-Z0-9]+)?$"))
 	http.HandleFunc("/upload/", makeHandler(uploadHandler, "^/(upload)/$"))
 	http.HandleFunc("/save/", makeHandler(saveHandler, "^/(save)/$"))
 	http.HandleFunc("/confirm/", makeHandler(confirmHandler, "^/confirm/([a-zA-Z0-9]+)$"))
