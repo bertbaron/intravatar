@@ -167,6 +167,11 @@ func writeToFile(filename string, avatar *Avatar) error {
 
 func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 	email := r.FormValue("email")
+	err := verifyEmail(email)
+	if err != nil {
+		renderSaveError(w, "Please use a valid email", err)
+		return
+	}
 	log.Printf("Saving image for email address: %v", email)
 	file, _, err := r.FormFile("image")
 	if err != nil {
@@ -206,4 +211,15 @@ func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 	}
 	// a confirmation email has ben send...
 	renderTemplate(w, "save", map[string]string{"Email": email})
+}
+
+func verifyEmail(email string) error  {
+	emailLowerCase := strings.ToLower(email)
+	for _, domain := range emailDomains {
+		if strings.HasSuffix(emailLowerCase, "@" + domain) {
+			return nil
+		}
+	}
+	return errors.New(fmt.Sprintf("email is not in white list of mail domains %s", emailDomains))
+
 }
