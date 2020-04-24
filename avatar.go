@@ -53,15 +53,20 @@ func image2Avatar(avatar *Avatar, img image.Image, format string) {
 }
 
 // scales the avatar (altering it!)
-func scale(avatar *Avatar, size int) error {
+func scale(avatar *Avatar, size int, requestFormat string) error {
 	img, format, err := avatar2Image(avatar)
 	if err != nil {
 		return err
 	}
+
+	targetFormat := format
+	if requestFormat != ""  {
+		targetFormat = requestFormat
+	}
 	actualSize := img.Bounds().Dx() // assume square
-	log.Printf("Resizing img from %vx%v to %vx%v", actualSize, actualSize, size, size)
+	log.Printf("Resizing img from %s %vx%v to %s %vx%v", format, actualSize, actualSize, targetFormat, size, size)
 	resized := resize.Resize(uint(size), uint(size), img, resize.Bicubic)
-	image2Avatar(avatar, resized, format)
+	image2Avatar(avatar, resized, targetFormat)
 	return nil
 }
 
