@@ -11,10 +11,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
-	"path/filepath"
 )
 
 // Options
@@ -38,7 +38,7 @@ var (
 	smtpUser     = flag.String("smtp-user", "", "SMTP user")
 	smtpPassword = flag.String("smtp-password", "", "SMTP password")
 	sender       = flag.String("sender", "", "Senders email address")
-	noTls        = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
+	noTLS        = flag.Bool("no-tls", false, "Disable tls encription for email, less secure! Can be useful if certificates of in-house mailhost are expired.")
 	testMailAddr = flag.String("test-mail-addr", "", "If specified, sends a test email on startup to the given email address")
 )
 
@@ -57,11 +57,14 @@ const (
 	configFile = "config.ini"
 )
 
-
 func exists(path string) bool {
 	_, err := os.Stat(path)
-	if err == nil { return true }
-	if os.IsNotExist(err) { return false }
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
 	log.Fatalf("Error looking up directory %s", path)
 	return false
 }
@@ -112,7 +115,7 @@ func createHash(email string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func getServiceUrl() string {
+func getServiceURL() string {
 	url := *webroot
 	if url == "" {
 		portName := ""
@@ -125,7 +128,7 @@ func getServiceUrl() string {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request, title string) {
-	url := getServiceUrl() + "avatar/"
+	url := getServiceURL() + "avatar/"
 	renderTemplate(w, "index", map[string]string{"AvatarLink": url})
 }
 
@@ -207,7 +210,7 @@ func main() {
 		emailDomains = strings.Split(*emailDomain, ",")
 		for idx, domain := range emailDomains {
 			emailDomains[idx] = strings.ToLower(domain)
-	}
+		}
 		log.Printf("Avatars will only be stored for email domains %s", emailDomains)
 	}
 
@@ -234,7 +237,7 @@ func main() {
 	createDirectoryStructure()
 
 	log.Printf("Listening on %s\n", address)
-	log.Printf("Service url: %s\n", getServiceUrl())
+	log.Printf("Service url: %s\n", getServiceURL())
 	http.HandleFunc("/", makeHandler(homeHandler, "^/()$"))
 
 	// Mandatory root-based resources

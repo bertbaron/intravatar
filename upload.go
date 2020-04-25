@@ -32,7 +32,7 @@ func validateAndResize(file io.Reader) (*Avatar, error) {
 
 func sendMessage(msg *gomail.Message) error {
 	config := tls.Config{}
-	if *noTls {
+	if *noTLS {
 		config.InsecureSkipVerify = true
 	}
 	var auth smtp.Auth
@@ -51,9 +51,9 @@ func sendMessage(msg *gomail.Message) error {
 
 // Sends a test email so that it can be verified that email is working correctly.
 func sendTestMail(email string) error {
-    // There is still too much duplicate code 
+	// There is still too much duplicate code
 	log.Printf("Sending test email to %s to verify that email is configured correctly", email)
-	
+
 	from := *sender
 	to := email
 	title := "Intravatar is up and running"
@@ -73,7 +73,7 @@ func sendConfirmationEmail(email string, token string) error {
 	to := email
 	title := "Please confirm your avatar upload"
 
-	url := getServiceUrl() + "confirm/" + token
+	url := getServiceURL() + "confirm/" + token
 	link := fmt.Sprintf("<a href=\"%s\">%s</a>", url, url)
 	body := "Thank you for uploading your avatar. You can confirm your upload by clicking this link: " + link
 
@@ -82,7 +82,7 @@ func sendConfirmationEmail(email string, token string) error {
 	msg.SetHeader("To", to)
 	msg.SetHeader("Subject", title)
 	msg.SetBody("text/html", body)
-	
+
 	if err := sendMessage(msg); err != nil {
 		log.Printf("Error sending configuration email: %v", err)
 		return errors.New("Failed to send confirmation email")
@@ -157,7 +157,9 @@ func confirmHandler(w http.ResponseWriter, r *http.Request, token string) {
 
 func writeToFile(filename string, avatar *Avatar) error {
 	f, err := os.Create(filename)
-	if err != nil {	return err }
+	if err != nil {
+		return err
+	}
 	defer f.Close()
 
 	b := bytes.NewBuffer(avatar.data)
@@ -213,13 +215,13 @@ func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 	renderTemplate(w, "save", map[string]string{"Email": email})
 }
 
-func verifyEmail(email string) error  {
+func verifyEmail(email string) error {
 	emailLowerCase := strings.ToLower(email)
 	for _, domain := range emailDomains {
-		if strings.HasSuffix(emailLowerCase, "@" + domain) {
+		if strings.HasSuffix(emailLowerCase, "@"+domain) {
 			return nil
 		}
 	}
-	return errors.New(fmt.Sprintf("email is not in white list of mail domains %s", emailDomains))
+	return fmt.Errorf("email is not in white list of mail domains %s", emailDomains)
 
 }

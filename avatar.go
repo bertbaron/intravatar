@@ -26,6 +26,7 @@ func max(x, y int) int {
 	return y
 }
 
+// Avatar image with some metadata
 type Avatar struct {
 	size int
 	data []byte
@@ -107,7 +108,7 @@ func strictReadImage(reader io.Reader) (*Avatar, error) {
 func readImage(reader io.Reader) *Avatar {
 	avatar, err := strictReadImage(reader)
 	if err != nil {
-		log.Printf("Could not read image", err)
+		log.Print("Could not read image", err)
 		return nil
 	}
 	return avatar

@@ -11,6 +11,7 @@ TARCMD=${TAR} --transform 's|^|intravatar/|' -czf
 
 init:
 	go get -v -d
+	go test
 
 linux: init
 	GOOS=linux GOARCH=amd64 go build -o intravatar . ; \

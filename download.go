@@ -7,20 +7,22 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"regexp"
+	"strconv"
 )
 
+// Request parameters for a gravatar request
 type Request struct {
-	hash string
-	size int
-	dflt string
+	hash   string
+	size   int
+	dflt   string
 	format string
 }
 
 const (
-	d_404 = "404"
+	d404 = "404"
 )
+
 var extensionRegExp = regexp.MustCompile("\\.([0-9a-zA-Z]+)$")
 
 func readFromFile(filename string, request Request) *Avatar {
@@ -53,7 +55,7 @@ func retrieveFromLocal(request Request) *Avatar {
 
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
 // dflt is used instead of request.dflt
-func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avatar {
+func retrieveFromRemoteURL(remoteURL string, request Request, dflt string) *Avatar {
 	options := fmt.Sprintf("s=%d", request.size)
 	if dflt != "" {
 		options += "&d=" + dflt
@@ -62,7 +64,7 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 	if request.format != "" {
 		formatPart = "." + request.format
 	}
-	remote := remoteUrl + "/" + request.hash + formatPart + "?" + options
+	remote := remoteURL + "/" + request.hash + formatPart + "?" + options
 	log.Printf("Retrieving from: %s", remote)
 	resp, err2 := http.Get(remote)
 	if err2 != nil {
@@ -71,7 +73,7 @@ func retrieveFromRemoteUrl(remoteUrl string, request Request, dflt string) *Avat
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 404 {
-		log.Printf("Avatar not found on remote %s", remoteUrl)
+		log.Printf("Avatar not found on remote %s", remoteURL)
 		return nil
 	}
 	avatar := readImage(resp.Body)
@@ -94,8 +96,8 @@ func retrieveFromRemote(request Request) *Avatar {
 	if l == 0 {
 		return nil
 	}
-	for _, remoteUrl := range remoteUrls[:l-1] {
-		if avatar := retrieveFromRemoteUrl(remoteUrl, request, d_404); avatar != nil {
+	for _, remoteURL := range remoteUrls[:l-1] {
+		if avatar := retrieveFromRemoteURL(remoteURL, request, d404); avatar != nil {
 			return avatar
 		}
 	}
@@ -103,7 +105,7 @@ func retrieveFromRemote(request Request) *Avatar {
 	if request.dflt != "" {
 		dflt = request.dflt
 	}
-	return retrieveFromRemoteUrl(remoteUrls[l-1], request, dflt)
+	return retrieveFromRemoteURL(remoteUrls[l-1], request, dflt)
 }
 
 func writeAvatarResult(w http.ResponseWriter, avatar *Avatar) {
@@ -121,10 +123,10 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 	if avatar == nil {
 		avatar = retrieveFromRemote(request)
 	}
-	if avatar == nil && request.dflt != d_404 {
+	if avatar == nil && request.dflt != d404 {
 		avatar = readFromFile(defaultImage, request)
 	}
-	if avatar == nil && request.dflt != d_404 {
+	if avatar == nil && request.dflt != d404 {
 		avatar = readFromFile("resources/mm", request)
 	}
 	return avatar
@@ -143,7 +145,7 @@ func loadImage(request Request, w http.ResponseWriter, r *http.Request) {
 // checks if dflt is a valid default image and only then returns it
 // otherwise an empty string is returned
 func validDefault(dflt string) string {
-	if dflt == d_404 {
+	if dflt == d404 {
 		return dflt
 	}
 	return ""
@@ -160,21 +162,22 @@ func avatarHandler(w http.ResponseWriter, r *http.Request, hash string) {
 	}
 	dflt := validDefault(r.FormValue("d"))
 
-
 	format := ""
 	m := extensionRegExp.FindStringSubmatch(r.URL.Path)
 	if m != nil {
 		format = normalizeFormat(m[1])
 	}
 
-	loadImage(Request{hash: hash, size: size, dflt: dflt, format:format}, w, r)
+	loadImage(Request{hash: hash, size: size, dflt: dflt, format: format}, w, r)
 }
 
 func normalizeFormat(inputName string) string {
 	var normalizedFormat string
 	switch inputName {
-		case "jpg": normalizedFormat = "jpeg"
-		default: normalizedFormat = inputName
+	case "jpg":
+		normalizedFormat = "jpeg"
+	default:
+		normalizedFormat = inputName
 	}
 	return normalizedFormat
 }
