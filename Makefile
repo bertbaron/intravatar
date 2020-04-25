@@ -10,7 +10,7 @@ RESOURCES=resources config.ini LICENSE
 TARCMD=${TAR} --transform 's|^|intravatar/|' -czf
 
 init:
-	go get ./...
+	go get -v -d
 
 linux: init
 	GOOS=linux GOARCH=amd64 go build -o intravatar . ; \

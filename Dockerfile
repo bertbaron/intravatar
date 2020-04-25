@@ -7,7 +7,7 @@
 # Note that the make file is not used
 
 # Builder image
-FROM golang:1.11-alpine as builder
+FROM golang:1.14-alpine as builder
 
 WORKDIR /go/src/github.com/bertbaron/intravatar
 COPY *.go ./
