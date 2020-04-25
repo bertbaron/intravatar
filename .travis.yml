@@ -10,13 +10,13 @@ deploy:
   provider: releases
   api_key:
     secure: UrEjFMZM9QBcXL6jNEPgpJygr0FGsO0cEBQyzrjrH1oyLhKm4wctbvjksyw7irgTQkFY6ydlKitDqb+IXQbvHFD2AYIr+NiiV/hBA2eRkRwwch1ZJOvEGT+7ThEcgIy+uO3KKh8DICvQ/kzeCHGLKcrfMFKtG388NYzV5AzH0I+MTuJulPD1dKynx/YqAcKqEMSzPYZWh82tT1P0SWebx8wTvxQ+JojmaEfpZqSdMy4aGBZX6ijdLnbe6SxKc73bo3xdvtC5zsNvxyBcSTJ8Zc6SlispLK/YsdD+Qa/OGZgQcYGiVV1UiDjVRvdhBWKdz2l/Vy/HHE+a0Q02jgePr+lFDy2TcLaQEYd07QQnDJnYFj8eFBoK8Oeg4IbIxoMfp1zvGbjXPO/5HdNhxgE6GiGGF3sI1ieVIU9taBfwS4vUC+v1N6WZGQ24GWLfLvOmIvhPJshapwubZmwoXqLgFhuwHyoBMCN2iJCdtLTBphNMOHwHs7+nHPpwcRNvRDytI0ETLZahPCHxC+/Pyg7jRVqhmn2VmSkXiBlmHfKIqOOp4pRjoqM6g6fICGlQPUnReH8ERMb18WCxxN8FsC9SkGTmaKCqFQHV2+113LU+fw/+HNUa7anFMD0/cy80WnbTIQ2FMt0tvZQ23/VVr1ztOnuCT7pRnMEjl9+jKdnrDm0=
-    file:
-      - intravatar-linux-amd64.tar.gz
-      - intravatar-linux-arm.tar.gz
-      - intravatar-darwin-amd64.tar.gz
-      - intravatar-windows-amd64.zip
-    skip_cleanup: true
-    on:
-      repo: bertbaron/intravatar
-      tags: true
+  file:
+    - intravatar-linux-amd64.tar.gz
+    - intravatar-linux-arm.tar.gz
+    - intravatar-darwin-amd64.tar.gz
+    - intravatar-windows-amd64.zip
+  skip_cleanup: true
+  on:
+    repo: bertbaron/intravatar
+    tags: true
   
