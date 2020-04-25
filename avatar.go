@@ -61,7 +61,7 @@ func scale(avatar *Avatar, size int, requestFormat string) error {
 	}
 
 	targetFormat := format
-	if requestFormat != ""  {
+	if requestFormat != "" {
 		targetFormat = requestFormat
 	}
 	actualSize := img.Bounds().Dx() // assume square
