@@ -4,18 +4,19 @@ go:
 - 1.14.x
 
 before_install:
-  - sudo apt-get install -y dos2unix
+- sudo apt-get install -y dos2unix
 
 deploy:
   provider: releases
   api_key:
-    secure: jr4wdkvuIQZTWrO8ifKH9ooeOultHrdXgwwF430p/HzDc1aKwuzyKiDJpv3FTGi7UQIFdgkyaCwJ8kvXn8J80jN8kAQCVKIPox+QmBa11/TaXqtvuzQ/3VX7pKoDXHPuw1+GMqTiAryXaGj+6FRR+Q/QAWhux/ekJT2s+NlvkzdOzxVwhympvYA84dcp1HaecbTJumS46cmV/IzcwqzR/0+bK86hscR63VIOmeQJpzOFBHmEny/QyekumewfRbxjbaULyJT5Ra+0Ry00HihRTdu7HqBa8BJZxHyzn8F1a0+LxYjrUixHthCJUwzLkvOtqVRx2n9dvqEIgnCsjsoCtkkB1Wj7sC7IZ+rmuhnK1T6SCq9/5tPXJ7enVx83r0UN1NCYnBFw57FRK2j9aurHmxZpJP65kBdBAJrxXyLhATtKgvk94qdGwgrXFPB5Aj/5GBxrgPd249Kmgw1dYoN3eQKVxEdb3884Okc8/kCERtRoxpv79u82LdjR4O+Hu4h8wMf0S8otcEfD35uL4yl3S4K6KjDq+h2GfL+Yx5E1/5NYVaYZEQKpL2l054iDbXqBGUQIkLGx9vtcWhHhovxc+Bb1IkmBbGxWBlnnwLk2MI25hpKYlppgtX3XntH5HRcoO8j3VKC2PEchqLLRSOkakIo/HqPluDqsbIMfNCWUTE=
-  file:
-    - intravatar-linux-amd64.tar.gz
-    - intravatar-linux-arm.tar.gz
-    - intravatar-darwin-amd64.tar.gz
-    - intravatar-windows-amd64.zip
-  skip_cleanup: true
-  on:
-    repo: bertbaron/intravatar
-    tags: true
+    secure: UrEjFMZM9QBcXL6jNEPgpJygr0FGsO0cEBQyzrjrH1oyLhKm4wctbvjksyw7irgTQkFY6ydlKitDqb+IXQbvHFD2AYIr+NiiV/hBA2eRkRwwch1ZJOvEGT+7ThEcgIy+uO3KKh8DICvQ/kzeCHGLKcrfMFKtG388NYzV5AzH0I+MTuJulPD1dKynx/YqAcKqEMSzPYZWh82tT1P0SWebx8wTvxQ+JojmaEfpZqSdMy4aGBZX6ijdLnbe6SxKc73bo3xdvtC5zsNvxyBcSTJ8Zc6SlispLK/YsdD+Qa/OGZgQcYGiVV1UiDjVRvdhBWKdz2l/Vy/HHE+a0Q02jgePr+lFDy2TcLaQEYd07QQnDJnYFj8eFBoK8Oeg4IbIxoMfp1zvGbjXPO/5HdNhxgE6GiGGF3sI1ieVIU9taBfwS4vUC+v1N6WZGQ24GWLfLvOmIvhPJshapwubZmwoXqLgFhuwHyoBMCN2iJCdtLTBphNMOHwHs7+nHPpwcRNvRDytI0ETLZahPCHxC+/Pyg7jRVqhmn2VmSkXiBlmHfKIqOOp4pRjoqM6g6fICGlQPUnReH8ERMb18WCxxN8FsC9SkGTmaKCqFQHV2+113LU+fw/+HNUa7anFMD0/cy80WnbTIQ2FMt0tvZQ23/VVr1ztOnuCT7pRnMEjl9+jKdnrDm0=
+    file:
+      - intravatar-linux-amd64.tar.gz
+      - intravatar-linux-arm.tar.gz
+      - intravatar-darwin-amd64.tar.gz
+      - intravatar-windows-amd64.zip
+    skip_cleanup: true
+    on:
+      repo: bertbaron/intravatar
+      tags: true
+  
