@@ -217,6 +217,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {
 
 func verifyEmail(email string) error {
 	emailLowerCase := strings.ToLower(email)
+	if len(emailDomains) == 0 {
+		return nil;
+	}
 	for _, domain := range emailDomains {
 		if strings.HasSuffix(emailLowerCase, "@"+domain) {
 			return nil
