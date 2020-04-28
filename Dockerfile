@@ -13,8 +13,8 @@ WORKDIR /go/src/github.com/bertbaron/intravatar
 COPY *.go ./
 RUN apk add --no-cache git
 RUN go get -v -d
+RUN go test
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o intravatar .
-
 # Target image
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
