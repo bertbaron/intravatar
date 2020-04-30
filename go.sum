@@ -1,9 +1,9 @@
-github.com/bertbaron/iniflags v0.0.0-20150815082957-688c01d1012a h1:EFvlY/DmCq/cvxXuqIL/SNfAtc3SCwpUnfvZJXcVwzI=
-github.com/bertbaron/iniflags v0.0.0-20150815082957-688c01d1012a/go.mod h1:0N4dcYwjfZIFErwBB5EgabRXT9uivMTixK9lZ9GztDQ=
 github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 h1:zYyBkD/k9seD2A7fsi6Oo2LfFZAehjjQMERAvZLEDnQ=
 github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646/go.mod h1:jpp1/29i3P1S/RLdc7JQKbRpFeM1dOBd8T9ki5s+AY8=
 github.com/oliamb/cutter v0.2.2 h1:Lfwkya0HHNU1YLnGv2hTkzHfasrSMkgv4Dn+5rmlk3k=
 github.com/oliamb/cutter v0.2.2/go.mod h1:4BenG2/4GuRBDbVm/OPahDVqbrOemzpPiG5mi1iryBU=
+github.com/vharitonsky/iniflags v0.0.0-20180513140207-a33cd0b5f3de h1:fkw+7JkxF3U1GzQoX9h69Wvtvxajo5Rbzy6+YMMzPIg=
+github.com/vharitonsky/iniflags v0.0.0-20180513140207-a33cd0b5f3de/go.mod h1:irMhzlTz8+fVFj6CH2AN2i+WI5S6wWFtK3MBCIxIpyI=
 gopkg.in/alexcesaro/quotedprintable.v2 v2.0.0-20150314193201-9b4a113f96b3 h1:oeB/ux+1n/XCMvII9SH7XL7WykayRzJPRVv2NNNfcbI=
 gopkg.in/alexcesaro/quotedprintable.v2 v2.0.0-20150314193201-9b4a113f96b3/go.mod h1:50qiz2hIdY0uy1WZBsLdZyDeYfsOzCji1lsl3dGpQHM=
 gopkg.in/gomail.v1 v1.0.0-20150320132819-11b919ab4933 h1:zZLjlY9WmDAdTNIndT9MFhQNZJ+9OkMz22q3Z9ZhMpk=

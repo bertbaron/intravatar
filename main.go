@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"flag"
 	"fmt"
-	"github.com/bertbaron/iniflags"
+	"github.com/vharitonsky/iniflags"
 	"html/template"
 	"io"
 	"io/ioutil"
