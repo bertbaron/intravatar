@@ -9,11 +9,9 @@ import (
 	"fmt"
 	"gopkg.in/gomail.v1"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/smtp"
-	"os"
 	"strings"
 	"time"
 )
@@ -106,23 +104,17 @@ func renderSaveError(w http.ResponseWriter, message string, err error) {
 }
 
 func getConfirmationFile(token string) (_ string, hash string, err error) {
-	files, err := ioutil.ReadDir(getUnconfirmedDir())
+	filename, err := storage.Find(getUnconfirmedDir(), token + "-")
 	if err != nil {
-		log.Fatal(err)
+		return "", "", errors.New("Confirmation period expired")
 	}
-	for _, file := range files {
-		filename := file.Name()
-		if strings.HasPrefix(filename, token) {
-			splitted := strings.Split(filename, "-")
-			if len(splitted) < 2 {
-				log.Printf("Invalid confirmation file name: %v", filename)
-				return "", "", errors.New("Internal error")
-			}
-			hash = splitted[1] // FIXME perform range check!
-			return getUnconfirmedDir() + "/" + filename, hash, nil
-		}
+	splitted := strings.Split(filename, "-")
+	if len(splitted) < 2 {
+		log.Printf("Invalid confirmation file name: %v", filename)
+		return "", "", errors.New("Internal error")
 	}
-	return "", "", errors.New("Confirmation period expired")
+	hash = splitted[1]
+	return getUnconfirmedDir() + "/" + filename, hash, nil
 }
 
 func confirm(w http.ResponseWriter, r *http.Request, token string) {
@@ -133,7 +125,7 @@ func confirm(w http.ResponseWriter, r *http.Request, token string) {
 		renderSaveError(w, "Error confirming upload", err)
 		return
 	}
-	err = os.Rename(filepath, createAvatarPath(hash))
+	err = storage.Rename(filepath, createAvatarPath(hash))
 	if err != nil {
 		renderSaveError(w, "Error confirming upload", err)
 		return
@@ -156,15 +148,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request, token string) {
 }
 
 func writeToFile(filename string, avatar *Avatar) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	b := bytes.NewBuffer(avatar.data)
-	_, err = io.Copy(f, b)
-	return err
+	return storage.Save(filename, bytes.NewBuffer(avatar.data))
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, ignored string) {

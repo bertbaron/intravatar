@@ -2,14 +2,15 @@ package main
 
 import (
 	"bytes"
-	"github.com/nfnt/resize"
-	"github.com/oliamb/cutter"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
 	"log"
+
+	"github.com/nfnt/resize"
+	"github.com/oliamb/cutter"
 )
 
 func min(x, y int) int {
@@ -97,19 +98,23 @@ func cropAndScale(avatar *Avatar) error {
 	return nil
 }
 
+func readImageFromBuffer(data *bytes.Buffer) *Avatar {
+	return &Avatar{size: -1, data: data.Bytes()}
+}
+
+func readImageFromReader(reader io.Reader) *Avatar {
+	b := new(bytes.Buffer)
+	if _, e := io.Copy(b, reader); e != nil {
+		log.Print("Could not read image", e)
+		return nil
+	}
+	return readImageFromBuffer(b)
+}
+
 func strictReadImage(reader io.Reader) (*Avatar, error) {
 	b := new(bytes.Buffer)
 	if _, e := io.Copy(b, reader); e != nil {
 		return nil, e
 	}
-	return &Avatar{size: -1, data: b.Bytes()}, nil
-}
-
-func readImage(reader io.Reader) *Avatar {
-	avatar, err := strictReadImage(reader)
-	if err != nil {
-		log.Print("Could not read image", err)
-		return nil
-	}
-	return avatar
+	return readImageFromBuffer(b), nil
 }

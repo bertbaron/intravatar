@@ -49,6 +49,8 @@ var (
 	emailDomains  = []string{}
 	remoteDefault = ""
 	templates     *template.Template
+	storage       Storage
+	localstorage  = NewFileStorage(".")
 )
 
 const (
@@ -76,24 +78,16 @@ func mkdir(path string) {
 	}
 }
 
-func createDirectoryStructure() {
-	mkdir(*dataDir)
-	mkdir(filepath.Join(*dataDir, "avatars"))
-	mkdir(filepath.Join(*dataDir, "unconfirmed"))
-}
-
 func createAvatarPath(hash string) string {
-	//return fmt.Sprintf("%s/avatars/%s", *dataDir, hash)
-	return filepath.Join(*dataDir, "avatars", hash)
+	return filepath.Join("avatars", hash)
 }
 
 func createUnconfirmedAvatarPath(hash string, token string) string {
-	//return fmt.Sprintf("%s/unconfirmed/%s-%s", *dataDir, token, hash)
-	return filepath.Join(*dataDir, "unconfirmed", fmt.Sprintf("%s-%s", token, hash))
+	return filepath.Join("unconfirmed", fmt.Sprintf("%s-%s", token, hash))
 }
 
 func getUnconfirmedDir() string {
-	return fmt.Sprintf("%s/unconfirmed", *dataDir)
+	return "unconfirmed"
 }
 
 func setHeaderField(w http.ResponseWriter, key string, value string) {
@@ -149,6 +143,13 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string), pattern st
 		fn(w, r, m[1])
 		log.Printf("Handled request %v %v in %v", r.Method, r.URL, time.Since(start))
 	}
+}
+
+func initStorage() {
+	storage = NewFileStorage(*dataDir)
+	mkdir(*dataDir)
+	mkdir(filepath.Join(*dataDir, "avatars"))
+	mkdir(filepath.Join(*dataDir, "unconfirmed"))
 }
 
 func initTemplates() {
@@ -234,7 +235,7 @@ func main() {
 		}
 	}
 
-	createDirectoryStructure()
+	initStorage()
 
 	log.Printf("Listening on %s\n", address)
 	log.Printf("Service url: %s\n", getServiceURL())

@@ -25,14 +25,13 @@ const (
 
 var extensionRegExp = regexp.MustCompile("\\.([0-9a-zA-Z]+)$")
 
-func readFromFile(filename string, request Request) *Avatar {
-	file, err := os.Open(filename)
+func readFromFile(s Storage, filename string, request Request) *Avatar {
+	buffer, err := s.Load(filename)
 	if err != nil {
-		log.Printf("Error reading file: %v", err)
+		log.Printf("Error reading file %v: %v", s.FullName(filename), err)
 		return nil
 	}
-	defer file.Close()
-	avatar := readImage(file)
+	avatar := readImageFromBuffer(buffer)
 	err = scale(avatar, request.size, request.format)
 	if err != nil {
 		log.Printf("Could not scale image: %v", err)
@@ -50,7 +49,7 @@ func readFromFile(filename string, request Request) *Avatar {
 }
 
 func retrieveFromLocal(request Request) *Avatar {
-	return readFromFile(createAvatarPath(request.hash), request)
+	return readFromFile(storage, createAvatarPath(request.hash), request)
 }
 
 // Retrieves the avatar from the remote service, returning nil if there is no avatar or it could not be retrieved
@@ -76,7 +75,7 @@ func retrieveFromRemoteURL(remoteURL string, request Request, dflt string) *Avat
 		log.Printf("Avatar not found on remote %s", remoteURL)
 		return nil
 	}
-	avatar := readImage(resp.Body)
+	avatar := readImageFromReader(resp.Body)
 	avatar.size = request.size // assume image is scaled by remote service
 	avatar.lastModified = resp.Header.Get("Last-Modified")
 
@@ -124,10 +123,13 @@ func retrieveImage(request Request, w http.ResponseWriter, r *http.Request) *Ava
 		avatar = retrieveFromRemote(request)
 	}
 	if avatar == nil && request.dflt != d404 {
-		avatar = readFromFile(defaultImage, request)
+		avatar = readFromFile(storage, defaultImage, request)
 	}
 	if avatar == nil && request.dflt != d404 {
-		avatar = readFromFile("resources/mm", request)
+		avatar = readFromFile(localstorage, defaultImage, request)
+	}
+	if avatar == nil && request.dflt != d404 {
+		avatar = readFromFile(localstorage, "resources/mm", request)
 	}
 	return avatar
 }
